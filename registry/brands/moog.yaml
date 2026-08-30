@@ -1,0 +1,14 @@
+slug: moog
+name: Moog
+homepage: https://www.moogmusic.com
+strategy: html_crawl
+entrypoints:
+  - https://www.moogmusic.com/support
+discovery:
+  follow_patterns: ["/support", "/products"]
+  max_depth: 2
+  max_pages: 40
+tos_reviewed: true
+tos_notes: "Owner's manuals published free for owners; no automation prohibition found 2026-08-30."
+priority: 1
+expected_manual_count: 30

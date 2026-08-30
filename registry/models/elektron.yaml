@@ -1,0 +1,112 @@
+# Generations are separate models, never aliases of each other.
+#
+# The first run of this file proved why: "analog four" was listed as an alias of the
+# MKII, so the MKI manual — and the Analog Keys — were all filed as MKII. That is the
+# same fault that put a MiniBrute 2 manual under "Arturia MiniBrute" in the live library.
+# Each generation gets its own entry, and only markers unique to it as aliases.
+brand: elektron
+models:
+  - slug: digitakt
+    name: Digitakt
+    aliases: ["digitakt"]
+    category: sampler
+  - slug: digitakt-ii
+    name: Digitakt II
+    aliases: ["digitakt ii", "digitakt 2"]
+    category: sampler
+  - slug: digitone
+    name: Digitone
+    aliases: ["digitone"]
+    category: synth
+  - slug: digitone-ii
+    name: Digitone II
+    aliases: ["digitone ii", "digitone 2"]
+    category: synth
+  - slug: digitone-keys
+    name: Digitone Keys
+    aliases: ["digitone keys"]
+    category: synth
+  - slug: octatrack
+    name: Octatrack
+    aliases: ["octatrack"]
+    category: sampler
+  - slug: octatrack-mkii
+    name: Octatrack MKII
+    aliases: ["octatrack mkii", "octatrack mk2"]
+    category: sampler
+  - slug: analog-rytm
+    name: Analog Rytm
+    aliases: ["analog rytm", "analog rytm mki"]
+    category: drum machine
+  - slug: analog-rytm-mkii
+    name: Analog Rytm MKII
+    aliases: ["analog rytm mkii", "analog rytm mk2"]
+    category: drum machine
+  - slug: analog-four
+    name: Analog Four
+    aliases: ["analog four", "analog four mki"]
+    category: synth
+  - slug: analog-four-mkii
+    name: Analog Four MKII
+    aliases: ["analog four mkii", "analog four mk2"]
+    category: synth
+  - slug: analog-keys
+    name: Analog Keys
+    aliases: ["analog keys"]
+    category: synth
+  - slug: analog-heat
+    name: Analog Heat
+    aliases: ["analog heat"]
+    category: outboard
+  - slug: analog-heat-mkii
+    name: Analog Heat MKII
+    aliases: ["analog heat mkii", "analog heat mk2"]
+    category: outboard
+  - slug: analog-heat-fx
+    name: Analog Heat +FX
+    aliases: ["analog heat fx", "analog heat +fx"]
+    category: outboard
+  - slug: analog-drive
+    name: Analog Drive
+    aliases: ["analog drive"]
+    category: pedal
+  - slug: model-samples
+    name: Model:Samples
+    aliases: ["model samples"]
+    category: sampler
+  - slug: model-cycles
+    name: Model:Cycles
+    aliases: ["model cycles"]
+    category: synth
+  - slug: syntakt
+    name: Syntakt
+    aliases: ["syntakt"]
+    category: drum machine
+  - slug: tonverk
+    name: Tonverk
+    aliases: ["tonverk"]
+    category: sampler
+  - slug: overbridge
+    name: Overbridge
+    aliases: ["overbridge"]
+    category: software
+  - slug: overhub
+    name: Overhub
+    aliases: ["overhub"]
+    category: accessory
+  - slug: tm-1
+    name: TM-1
+    aliases: ["tm 1", "tm-1"]
+    category: accessory
+  - slug: sidstation
+    name: SidStation
+    aliases: ["sidstation"]
+    category: synth
+  - slug: machinedrum
+    name: Machinedrum
+    aliases: ["machinedrum"]
+    category: drum machine
+  - slug: monomachine
+    name: Monomachine
+    aliases: ["monomachine"]
+    category: synth

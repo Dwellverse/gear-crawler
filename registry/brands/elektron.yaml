@@ -1,0 +1,15 @@
+# Elektron publishes every manual on one support page, no sitemap entries for the PDFs.
+slug: elektron
+name: Elektron
+homepage: https://www.elektron.se
+strategy: html_crawl
+entrypoints:
+  - https://www.elektron.se/en/support
+discovery:
+  follow_patterns: ["/support", "/en/support"]
+  max_depth: 2
+  max_pages: 40
+tos_reviewed: true
+tos_notes: "Support downloads are public; no automation prohibition found in terms 2026-08-30."
+priority: 1
+expected_manual_count: 45

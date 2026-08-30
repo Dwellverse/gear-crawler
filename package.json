@@ -1,0 +1,16 @@
+{
+  "name": "gear-crawler",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Finds manufacturer-published music gear manuals and hands them to the GearPlug intake endpoint.",
+  "bin": { "gearcrawl": "./src/cli.js" },
+  "scripts": { "crawl": "node src/cli.js" },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "node-html-parser": "^6.1.13",
+    "robots-parser": "^3.0.1",
+    "yaml": "^2.5.1"
+  },
+  "engines": { "node": ">=20" }
+}

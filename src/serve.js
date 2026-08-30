@@ -17,6 +17,7 @@ const manifest = require('./manifest');
 const registry = require('./registry');
 const discover = require('./phases/discover');
 const handoff = require('./phases/handoff');
+const lookup = require('./phases/lookup');
 
 const PAGE = `<!doctype html><html><head><meta charset="utf-8">
 <title>gear-crawler</title>
@@ -48,6 +49,19 @@ input,select{background:#1b1b22;border:1px solid #33333d;border-radius:6px;color
 </style></head><body><div class="wrap">
 <h1>gear-crawler</h1>
 <div class="sub">Finds manufacturer manuals and hands them to GearPlug. This page reads the local manifest — nothing here is on the internet.</div>
+
+<div class="card">
+  <h2 style="margin-top:0">Look up a company</h2>
+  <div class="muted" style="margin-bottom:10px">Type a manufacturer. It checks what the library already answers for them, walks their support pages, and shows what we do not have.</div>
+  <div class="row">
+    <input id="brand-name" placeholder="Roland, Korg, Strymon…" size="24" list="brand-list">
+    <datalist id="brand-list"></datalist>
+    <input id="brand-url" placeholder="support page URL (only if it isn't known)" size="42">
+    <button class="go" id="lookup">Look up</button>
+    <span class="muted" id="lookup-status"></span>
+  </div>
+  <div id="lookup-result"></div>
+</div>
 
 <div class="card"><h2 style="margin-top:0">Budgets</h2><table id="budgets"></table></div>
 
@@ -146,6 +160,61 @@ $('handoff').addEventListener('click', async () => {
   say(r.error ? ('failed: ' + r.error) : (r.sent + ' handed off, ' + r.failed + ' failed'));
   $('handoff').disabled = false; load();
 });
+let PREVIEW = null;
+
+get('/api/directory').then(d => {
+  $('brand-list').innerHTML = d.brands.map(b => '<option value="' + esc(b.name) + '">').join('');
+});
+
+$('lookup').addEventListener('click', async () => {
+  const name = $('brand-name').value.trim();
+  if (!name) return;
+  $('lookup').disabled = true;
+  $('lookup-status').textContent = 'walking their support pages… this respects their crawl delay, so give it a moment';
+  $('lookup-result').innerHTML = '';
+  const d = await post('/api/lookup', { name, supportUrl: $('brand-url').value.trim() || null });
+  $('lookup').disabled = false;
+  $('lookup-status').textContent = '';
+  PREVIEW = d;
+
+  if (d.error) {
+    $('lookup-result').innerHTML = '<div class="muted">' + esc(d.error) + '</div>';
+    return;
+  }
+
+  const rows = d.rows.slice(0, 300).map(r =>
+    '<tr><td>' + esc(r.label) + (r.resolved ? '' : ' <span class="muted">(name guessed from the link)</span>') + '</td>' +
+    '<td><span class="pill ' + (r.already === 'new' ? 'warn' : 'ok') + '">' +
+      (r.already === 'new' ? 'we do not have this' : r.already === 'live' ? 'already answering' : 'listed, not answering') +
+    '</span></td>' +
+    '<td class="muted">' + esc(r.url.split('/').pop()).slice(0, 48) + '</td></tr>').join('');
+
+  $('lookup-result').innerHTML =
+    '<div class="row" style="margin-top:12px">' +
+      '<span class="pill ok">' + d.have.live + ' already answering</span>' +
+      '<span class="pill neutral">' + d.found + ' published</span>' +
+      '<span class="pill warn">' + d.missing + ' we do not have</span>' +
+      (d.have.error ? '<span class="pill bad">library check failed: ' + esc(d.have.error) + '</span>' : '') +
+    '</div>' +
+    (d.missing ?
+      '<div class="row"><label class="muted"><input type="checkbox" id="tos"> I have read this manufacturer&#39;s terms and they do not forbid automated download</label>' +
+      '<button class="go" id="adopt">Add the ' + d.missing + ' we do not have</button></div>' : '') +
+    '<table>' + (rows || '<tr><td class="muted">Nothing found on those pages.</td></tr>') + '</table>';
+});
+
+document.addEventListener('click', async e => {
+  if (!e.target.closest('#adopt')) return;
+  if (!$('tos').checked) { alert('Confirm you have read their terms first.'); return; }
+  const b = $('adopt'); b.disabled = true;
+  const r = await post('/api/adopt', {
+    brandName: PREVIEW.brandName, entrypoints: PREVIEW.entrypoints,
+    rows: PREVIEW.rows, tosReviewed: true,
+  });
+  say(r.error ? ('failed: ' + r.error) : (PREVIEW.brandName + ': added ' + r.added + ' manual(s), ' + r.unresolved + ' need a name in the registry'));
+  b.disabled = false;
+  load();
+});
+
 $('q').addEventListener('input', () => { clearTimeout(window._t); window._t = setTimeout(loadDocs, 250); });
 $('state').addEventListener('change', loadDocs);
 load();
@@ -201,6 +270,25 @@ function start({ port = 7777, dbPath = null } = {}) {
                 if (q) rows = rows.filter(r => `${r.gear_name || ''} ${r.source_url}`.toLowerCase().includes(q));
                 if (state) rows = rows.filter(r => r.state === state);
                 return json(res, { total: rows.length, docs: rows.slice(0, 200) });
+            }
+
+            if (url.pathname === '/api/directory') {
+                return json(res, { brands: lookup.directory().map(b => ({ name: b.name })) });
+            }
+
+            if (url.pathname === '/api/lookup' && req.method === 'POST') {
+                const body = await readBody(req);
+                const out = await lookup.preview(db, {
+                    name: body.name,
+                    supportUrls: body.supportUrl ? [body.supportUrl] : null,
+                    log: () => {},
+                });
+                return json(res, out);
+            }
+
+            if (url.pathname === '/api/adopt' && req.method === 'POST') {
+                const body = await readBody(req);
+                return json(res, lookup.adopt(db, body));
             }
 
             if (url.pathname === '/api/discover' && req.method === 'POST') {

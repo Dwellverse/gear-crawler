@@ -11,6 +11,7 @@
  *   gearcrawl doctor                 what is configured, what is reachable
  *   gearcrawl discover --brand moog  find manuals for one brand (or --all)
  *   gearcrawl status                 counts, budgets, per-brand coverage
+ *   gearcrawl serve                  local web UI on http://127.0.0.1:7777
  *   gearcrawl handoff --limit 20     send discovered manuals to the app
  *
  * Every command takes --dry-run, which makes no network request to a manufacturer.
@@ -111,6 +112,10 @@ async function main() {
         case 'doctor':   await cmdDoctor(db); break;
         case 'discover': await cmdDiscover(db); break;
         case 'status':   cmdStatus(db); break;
+        case 'serve':
+            db.close();
+            require('./serve').start({ port: parseInt(arg('port', '7777'), 10), dbPath: arg('db', null) });
+            return;   // the server keeps the process alive
         case 'handoff':  await require('./phases/handoff').run(db, {
                              limit: parseInt(arg('limit', '20'), 10), dryRun: has('dry-run'),
                          }); break;

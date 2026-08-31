@@ -78,7 +78,7 @@ input,select{background:#1b1b22;border:1px solid #33333d;border-radius:6px;color
   <h2 style="margin-top:0">Manuals found</h2>
   <div class="row">
     <input id="q" placeholder="Search gear or URL…" size="28">
-    <select id="state"><option value="">any state</option></select>
+    <select id="state"><option value="outstanding">still to do</option></select>
     <button class="go" id="handoff">Hand off 10 to the app</button>
     <span class="muted" id="handoff-note"></span>
   </div>
@@ -116,7 +116,10 @@ async function load() {
     }).join('') : '<tr><td class="muted">No brands yet — add a file under registry/brands.</td></tr>');
 
   if (!$('state').dataset.filled) {
-    $('state').innerHTML = '<option value="">any state</option>' +
+    const all = d.states.reduce((n,s)=>n+s.c, 0);
+    $('state').innerHTML =
+      '<option value="outstanding">still to do</option>' +
+      '<option value="">everything (' + all + ')</option>' +
       d.states.map(s=>'<option value="'+esc(s.state)+'">'+esc(s.state)+' ('+s.c+')</option>').join('');
     $('state').dataset.filled = '1';
   }
@@ -136,7 +139,10 @@ async function loadDocs() {
         '<td class="muted">'+esc(x.source_url.split('/').pop()).slice(0,54)+'</td></tr>';
     }).join('') : '<tr><td class="muted">Nothing matches.</td></tr>') ;
   $('docs').insertAdjacentHTML('beforeend',
-    '<tr><td colspan="5" class="muted">showing '+d.docs.length+' of '+d.total+'</td></tr>');
+    '<tr><td colspan="5" class="muted">showing '+d.docs.length+' of '+d.total+
+      ($('state').value==='outstanding' && d.done
+        ? ' — '+d.done+' already in the library, hidden. They stay on the record: that is what stops the same PDF being handed off, and paid for, twice.'
+        : '')+'</td></tr>');
 }
 
 document.addEventListener('click', async e => {
@@ -268,8 +274,12 @@ function start({ port = 7777, dbPath = null } = {}) {
                 const state = url.searchParams.get('state') || '';
                 let rows = db.prepare('SELECT * FROM documents ORDER BY brand_slug, gear_name, id').all();
                 if (q) rows = rows.filter(r => `${r.gear_name || ''} ${r.source_url}`.toLowerCase().includes(q));
-                if (state) rows = rows.filter(r => r.state === state);
-                return json(res, { total: rows.length, docs: rows.slice(0, 200) });
+                // A handed-off row is the receipt that stops the same URL being ingested
+                // twice, so it is never deleted — the default view just hides it.
+                const done = rows.filter(r => r.state === 'handed_off').length;
+                if (state === 'outstanding') rows = rows.filter(r => r.state !== 'handed_off');
+                else if (state) rows = rows.filter(r => r.state === state);
+                return json(res, { total: rows.length, done, docs: rows.slice(0, 200) });
             }
 
             if (url.pathname === '/api/directory') {

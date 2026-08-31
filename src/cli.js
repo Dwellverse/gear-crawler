@@ -116,6 +116,12 @@ async function main() {
             db.close();
             require('./serve').start({ port: parseInt(arg('port', '7777'), 10), dbPath: arg('db', null) });
             return;   // the server keeps the process alive
+        case 'hunt':     await require('./phases/hunt').run(db, {
+                             top: parseInt(arg('top', '10'), 10),
+                             maxPages: parseInt(arg('max-pages', '200'), 10),
+                             maxDepth: parseInt(arg('max-depth', '3'), 10),
+                             apply: has('apply'),
+                         }); break;
         case 'handoff':  await require('./phases/handoff').run(db, {
                              limit: parseInt(arg('limit', '20'), 10), dryRun: has('dry-run'),
                          }); break;

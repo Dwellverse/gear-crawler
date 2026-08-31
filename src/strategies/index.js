@@ -126,7 +126,7 @@ async function json_api(db, brand, { log }) {
  * html_crawl — bounded breadth-first walk from the support entrypoints.
  * Same host only, depth-limited, page-limited. The last resort, and the noisiest.
  */
-async function html_crawl(db, brand, { log }) {
+async function html_crawl(db, brand, { log, priority }) {
     const cfg = brand.discovery || {};
     const follow = (cfg.follow_patterns || []).map(p => new RegExp(p, 'i'));
     const maxDepth = cfg.max_depth ?? 2;
@@ -134,10 +134,23 @@ async function html_crawl(db, brand, { log }) {
 
     const found = new Map();
     const seen = new Set();
-    let queue = brand.entrypoints.map(url => ({ url, depth: 0 }));
+    let queue = brand.entrypoints.map(url => ({ url, depth: 0, score: 0 }));
+
+    // With a page budget far smaller than the site, the order of the frontier decides
+    // what we actually see. `priority` lets the caller pull pages that mention the gear
+    // we are missing to the front, so a 200-page budget is spent on the 200 pages most
+    // likely to carry those manuals instead of the first 200 in link order.
+    const take = () => {
+        if (!priority) return queue.shift();
+        let best = 0;
+        for (let i = 1; i < queue.length; i++) {
+            if (queue[i].score > queue[best].score) best = i;
+        }
+        return queue.splice(best, 1)[0];
+    };
 
     while (queue.length && seen.size < maxPages) {
-        const { url, depth } = queue.shift();
+        const { url, depth } = take();
         if (seen.has(url)) continue;
         seen.add(url);
 
@@ -159,7 +172,7 @@ async function html_crawl(db, brand, { log }) {
             if (depth >= maxDepth) continue;
             if (net.hostOf(link.url) !== host) continue;                 // never leave the brand's site
             if (follow.length && !follow.some(re => re.test(new URL(link.url).pathname))) continue;
-            if (!seen.has(link.url)) queue.push({ url: link.url, depth: depth + 1 });
+            if (!seen.has(link.url)) queue.push({ url: link.url, depth: depth + 1, score: priority ? priority(link.url, link.linkText) : 0 });
         }
     }
     log(`  walked ${seen.size} page(s)`);

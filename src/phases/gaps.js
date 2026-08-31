@@ -14,6 +14,7 @@
 
 const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 
+
 /**
  * Model codes inside a gear name — "Roland AIRA TR-8S Rhythm Performer" yields TR-8S.
  * These carry nearly all of the identifying power in gear naming, and they are what

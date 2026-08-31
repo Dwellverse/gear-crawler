@@ -15,8 +15,9 @@ const net = require('../net');
 // Drivers, installers and marketing are not manuals. Firmware *release notes* are kept —
 // they answer real questions — while firmware *binaries* are not.
 // Blank sheets and patch books are not manuals — they are worksheets with almost no
-// prose, and ingesting one adds noise under a real gear name.
-const REJECT = /(driver|firmware[-_.]?\d|\.zip|\.exe|\.dmg|\.pkg|installer|software|catalog|brochure|price|poster|dealer|blank[-_ ]?sheet|patch[-_ ]?book|patch[-_ ]?sheet|blank[-_ ]?chart)/i;
+// prose, and ingesting one adds noise under a real gear name. Nor are RoHS statements
+// and compliance declarations, which Korg publishes on the same page as the manual.
+const REJECT = /(driver|firmware[-_.]?\d|\.zip|\.exe|\.dmg|\.pkg|installer|software|catalog|brochure|price|poster|dealer|blank[-_ ]?sheet|patch[-_ ]?book|patch[-_ ]?sheet|blank[-_ ]?chart|rohs|compliance|declaration[-_ ]?of|safety[-_ ]?(?:guide|precautions|instructions))/i;
 const PDF = /\.pdf(\?|$)/i;
 
 // v1 indexes English only. Manufacturers mark the language in the filename far more
@@ -25,17 +26,64 @@ const PDF = /\.pdf(\?|$)/i;
 // Word-boundaried so "JA" cannot match inside a model name, and "-de" cannot match
 // "digitakt-demo".
 const NON_ENGLISH = /(?:^|[-_.]|\d)(ja|jp|jpn|de|deu|ger|fr|fra|es|esp|spa|it|ita|nl|pt|pl|ru|sv|zh|cn|ko|kr|tw)(?=[-_.]|$)/i;
+// Some makers spell the language out — "octatrack_manual_japanese_OS1.25.pdf".
+const NON_ENGLISH_WORD = /(?:^|[-_.])(japanese|german|french|spanish|italian|dutch|portuguese|russian|chinese|korean|swedish|polish|deutsch|espanol|francais|italiano)(?=[-_.]|$)/i;
 const ENGLISH_HINT = /(?:^|[-_.])(en|eng|english)(?=[-_.]|$)/i;
+
+/**
+ * The filename a document is actually published under.
+ *
+ * Usually the last path segment, but a CDN may serve an opaque hash and put the real
+ * name in a content-disposition parameter. Korg does exactly this: every manual is
+ * `<32 hex>.pdf?...filename*=UTF-8''EK50_OM_F5.pdf`, so reading only the path made every
+ * language look identical and let the French, German, Spanish, Chinese and Dutch
+ * editions of one manual into the corpus alongside the English.
+ */
+function publishedName(url) {
+    const s = String(url);
+    // The parameter arrives percent-encoded in the href — "filename%2A%3DUTF-8%27%27" —
+    // so the whole URL is decoded before looking for it. Matching the decoded spelling
+    // alone found nothing and every Korg document kept its hash as its name.
+    let decoded = s;
+    try { decoded = decodeURIComponent(s); } catch (e) { /* malformed escape: use raw */ }
+
+    const m = decoded.match(/filename\*?=(?:[^']*'')?([^&;]+)/i);
+    if (m) { try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; } }
+    try { return decodeURIComponent(s.split('?')[0].split('/').pop() || ''); } catch (e) { return s; }
+}
+
+/**
+ * Some makers mark the language with single letters rather than a two-letter code:
+ * Korg ships EK50_OM_E5 (English), _F5 (French), _G5 (German), _S5, _C6, _D3, and
+ * EK50_OM_EFGSCJ5 for a manual containing all of them.
+ *
+ * A trailing group is only read as languages when *every* letter in it is a language
+ * initial, which is what keeps "OM" (owner's manual), "QSG" (quick start guide), "VNL"
+ * (voice name list) and "CSA" (a product name) out of it. English anywhere in the group
+ * keeps the document.
+ */
+const LANGUAGE_INITIALS = new Set(['E', 'F', 'G', 'S', 'I', 'J', 'C', 'K', 'D', 'P', 'R']);
+
+function nonEnglishBySingleLetters(name) {
+    const m = name.match(/[-_]([A-Za-z]{1,8})\d*$/);
+    if (!m) return false;
+    const letters = m[1].toUpperCase().split('');
+    if (!letters.every(c => LANGUAGE_INITIALS.has(c))) return false;   // not a language group
+    return !letters.includes('E');
+}
 
 /** A filename that names a language other than English, and does not also say English. */
 function looksNonEnglish(url) {
-    const name = decodeURIComponent(String(url).split('/').pop().replace(/\.pdf.*$/i, ''));
-    return NON_ENGLISH.test(name) && !ENGLISH_HINT.test(name);
+    const name = publishedName(url).replace(/\.pdf.*$/i, '');
+    if ((NON_ENGLISH.test(name) || NON_ENGLISH_WORD.test(name)) && !ENGLISH_HINT.test(name)) return true;
+    return nonEnglishBySingleLetters(name);
 }
 
 const abs = (href, base) => { try { return new URL(href, base).toString(); } catch (e) { return null; } };
 const isPdf = url => PDF.test(url);
-const wanted = (url, text) => isPdf(url) && !REJECT.test(url) && !REJECT.test(text || '') && !looksNonEnglish(url);
+const wanted = (url, text) => isPdf(url)
+    && !REJECT.test(url) && !REJECT.test(publishedName(url)) && !REJECT.test(text || '')
+    && !looksNonEnglish(url);
 
 /** Every <a> on a page, absolute and de-duplicated. */
 function links(html, baseUrl) {
@@ -197,4 +245,4 @@ async function discover(db, brand, opts) {
     return fn(db, brand, opts);
 }
 
-module.exports = { discover, STRATEGIES, links, wanted, looksNonEnglish, REJECT };
+module.exports = { discover, STRATEGIES, links, wanted, looksNonEnglish, publishedName, REJECT };

@@ -1,12 +1,15 @@
 .audit.json
 .env
 .gapreport.json
+.images.json
 .probe.json
+.products.json
 .serve.log
 .sourcing-queue.html
 handoff-run.log
 hunt-run.log
 hunt2.log
+imgrun.log
 korg-run.log
 manifest.sqlite*
 node_modules/

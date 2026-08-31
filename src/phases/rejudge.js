@@ -9,6 +9,7 @@
  */
 
 const gaps = require('./gaps');
+const strategies = require('../strategies');
 
 async function run(db, { apply = false, log = console.log } = {}) {
     const rows = db.prepare(`
@@ -37,6 +38,13 @@ async function run(db, { apply = false, log = console.log } = {}) {
 
         for (const d of docs) {
             checked++;
+            // Re-apply every current rule, not just matching: the language and
+            // document-type filters change too, and records written before a fix are
+            // exactly the ones sitting in the queue waiting to be handed off.
+            if (!strategies.wanted(d.source_url, d.link_text)) {
+                drop.push({ ...d, why: 'no longer passes the document filters' });
+                continue;
+            }
             const hit = gaps.matchGap({ url: d.source_url, linkText: d.link_text }, hunt);
             if (!hit) {
                 drop.push({ ...d, why: 'no longer matches any gap' });

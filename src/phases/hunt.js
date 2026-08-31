@@ -52,12 +52,10 @@ async function huntBrand(db, entry, { maxPages = 200, maxDepth = 3, log = () => 
         strategy: 'html_crawl',
         entrypoints,
         discovery: {
-            // No follow_patterns. Requiring "support|download|manual|product" in the path
-            // starved brands whose product URLs are just the model name: Moog walked 6
-            // pages of a 120 budget. Measured at 45 pages, dropping the filter took Moog
-            // from 6 pages to 12 and Roland from 381 PDFs to 385, with the same gaps
-            // filled — never worse. Same-host, depth and page caps already bound the walk.
-            follow_patterns: [],
+            // A preference, not a filter — the crawler walks these first and falls back
+            // to any same-host link once they run out. See html_crawl for why neither
+            // extreme works.
+            follow_patterns: ['support', 'download', 'manual', 'product', 'document'],
             max_depth: maxDepth, max_pages: maxPages,
         },
     };

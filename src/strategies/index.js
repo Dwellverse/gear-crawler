@@ -136,16 +136,25 @@ async function html_crawl(db, brand, { log }) {
 
     const found = new Map();
     const seen = new Set();
-    let queue = brand.entrypoints.map(url => ({ url, depth: 0 }));
+    // Two tiers, both breadth-first. `follow_patterns` says which paths look like
+    // documentation; those are walked first, and same-host links that match nothing are
+    // only walked once that runs dry.
+    //
+    // Neither extreme works on its own, and each failure was measured. As a hard filter
+    // it starved Moog, whose product URLs are just the model name — 6 pages of a 120
+    // budget. Removed entirely it let Korg wander off the download section into news and
+    // artist pages: 220 pages for 1 PDF, where 35 focused pages had found 7. Preferring
+    // them and falling back keeps Korg's focus and Moog's reach.
+    const queue = brand.entrypoints.map(url => ({ url, depth: 0 }));
+    const spare = [];
+    const take = () => (queue.length ? queue.shift() : spare.shift());
 
-    // Breadth-first, in link order. Two attempts at scoring the frontier — pulling
-    // pages that name missing gear to the front, then adding that to a manual/download
-    // bonus — both did far worse than this on the same budget: measured on Roland at 40
-    // pages, link order found 381 PDFs and filled 2 gaps, while either ordering found 0.
-    // Manufacturers put manuals on index pages near the entry point, and any reordering
-    // dives into product marketing instead. Left as it is, deliberately.
-    while (queue.length && seen.size < maxPages) {
-        const { url, depth } = queue.shift();
+    // Within each tier the order is plain link order. Two attempts at scoring the
+    // frontier — pulling pages that name missing gear to the front, then adding a
+    // manual/download bonus — both did far worse: measured on Roland at 40 pages, link
+    // order found 381 PDFs and filled 2 gaps, while either ordering found 0.
+    while ((queue.length || spare.length) && seen.size < maxPages) {
+        const { url, depth } = take();
         if (seen.has(url)) continue;
         seen.add(url);
 
@@ -171,8 +180,9 @@ async function html_crawl(db, brand, { log }) {
             }
             if (depth >= maxDepth) continue;
             if (net.hostOf(link.url) !== host) continue;                 // never leave the brand's site
-            if (follow.length && !follow.some(re => re.test(new URL(link.url).pathname))) continue;
-            if (!seen.has(link.url)) queue.push({ url: link.url, depth: depth + 1 });
+            if (seen.has(link.url)) continue;
+            const preferred = !follow.length || follow.some(re => re.test(new URL(link.url).pathname));
+            (preferred ? queue : spare).push({ url: link.url, depth: depth + 1 });
         }
     }
     log(`  walked ${seen.size} page(s)`);

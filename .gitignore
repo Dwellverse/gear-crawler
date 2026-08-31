@@ -7,6 +7,7 @@
 handoff-run.log
 hunt-run.log
 hunt2.log
+korg-run.log
 manifest.sqlite*
 node_modules/
 reports/*.jsonl

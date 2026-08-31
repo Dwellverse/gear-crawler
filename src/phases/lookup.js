@@ -19,6 +19,7 @@ const manifest = require('../manifest');
 const registry = require('../registry');
 const strategies = require('../strategies');
 const net = require('../net');
+const gaps = require('./gaps');
 
 const DIRECTORY = path.join(__dirname, '..', '..', 'registry', 'directory.yaml');
 
@@ -107,21 +108,41 @@ async function preview(db, { name, homepage, supportUrls, log = () => {} }) {
     }
 
     const models = registry.loadModels(brand.slug);
+
+    // The app's catalogue is the demand side: gear it lists but cannot answer about.
+    // A found PDF is interesting mainly because it fills one of these, so that is what
+    // the row is scored against — not just whether the name is new to us.
+    const hunt = gaps.huntList(have.gear || [], brandName);
+    const filled = new Map();
+
     const rows = found.map(f => {
         const filename = decodeURIComponent(new URL(f.url).pathname.split('/').pop() || '');
         const match = registry.matchModel(f.linkText, models) || registry.matchModel(filename, models);
         const guess = match ? registry.gearNameFor(brand, match.model) : null;
-        // Without a model registry for this brand, fall back to the link text so the
-        // preview is still useful — it is shown as a guess, and you can correct it.
         const label = guess || (f.linkText || filename).replace(/\.pdf$/i, '').trim();
         const key = norm(label);
+
+        const hit = gaps.matchGap({ url: f.url, linkText: f.linkText || filename }, hunt);
+        if (hit) filled.set(hit.gap.gearName, true);
+
         return {
             url: f.url,
-            label,
-            resolved: !!guess,
-            already: liveNames.has(key) ? 'live' : knownNames.has(key) ? 'listed' : 'new',
+            label: hit ? hit.gap.gearName : label,
+            resolved: !!guess || !!hit,
+            fills: hit ? hit.gap.gearName : null,
+            already: hit ? 'gap'
+                : liveNames.has(key) ? 'live'
+                : knownNames.has(key) ? 'listed'
+                : 'new',
         };
     });
+
+    // Gear we still cannot answer and did not find a manual for. This is the real
+    // output of a lookup — the part that says what work is left, by name.
+    const unfound = hunt.filter(g => !filled.has(g.gearName) && g.codes.length).map(g => g.gearName);
+    // Gear whose name carries nothing distinctive enough to match on ("Moog One").
+    // Named rather than silently counted as found or missing.
+    const unmatchable = hunt.filter(g => !g.codes.length).map(g => g.gearName);
 
     // Finding nothing means we could not read their site — a dead entry point, a page
     // rendered by JavaScript, or a refusal. Reporting that as "0 we do not have" reads
@@ -143,6 +164,10 @@ async function preview(db, { name, homepage, supportUrls, log = () => {} }) {
         },
         found: rows.length,
         missing: rows.filter(r => r.already === 'new').length,
+        gaps: hunt.length,
+        gapsFilled: filled.size,
+        unfound,
+        unmatchable,
         rows,
     };
 }

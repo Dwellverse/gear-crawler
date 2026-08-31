@@ -200,12 +200,20 @@ $('lookup').addEventListener('click', async () => {
 
   $('lookup-result').innerHTML =
     '<div class="row" style="margin-top:12px">' +
-      '<span class="pill ok">' + d.have.live + ' already answering</span>' +
-      '<span class="pill neutral">' + d.found + ' published</span>' +
-      '<span class="pill warn">' + d.missing + ' we do not have</span>' +
+      '<span class="pill ok">' + d.have.live + ' answering</span>' +
+      '<span class="pill bad">' + d.gaps + ' listed but cannot answer</span>' +
+      '<span class="pill neutral">' + d.found + ' PDFs on their site</span>' +
+      '<span class="pill ok">' + d.gapsFilled + ' of those gaps filled</span>' +
+      '<span class="pill warn">' + (d.unfound || []).length + ' still unfound</span>' +
       (d.have.error ? '<span class="pill bad">library check failed: ' + esc(d.have.error) + '</span>' : '') +
     '</div>' +
     (d.missing ?
+      '<div class="muted" style="margin-top:10px">Still unfound, by name: ' +
+        esc((d.unfound || []).slice(0, 40).join(', ')) +
+        ((d.unfound || []).length > 40 ? ' and ' + ((d.unfound || []).length - 40) + ' more' : '') + '</div>' +
+      ((d.unmatchable || []).length ? '<div class="muted" style="margin-top:6px">' + (d.unmatchable || []).length +
+        ' name(s) carry nothing distinctive enough to match on, so they are neither found nor missing: ' +
+        esc((d.unmatchable || []).slice(0, 12).join(', ')) + '</div>' : '') +
       '<div class="row"><label class="muted"><input type="checkbox" id="tos"> I have read this manufacturer&#39;s terms and they do not forbid automated download</label>' +
       '<button class="go" id="adopt">Add the ' + d.missing + ' we do not have</button></div>' : '') +
     '<table>' + (rows || '<tr><td class="muted">Nothing found on those pages.</td></tr>') + '</table>';

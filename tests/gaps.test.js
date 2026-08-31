@@ -1,0 +1,69 @@
+/**
+ * Gap matching decides whether a PDF we found is the manual for a piece of gear we
+ * cannot answer about. Getting this wrong is worse than finding nothing: a mislabelled
+ * manual answers confidently about the wrong machine.
+ *
+ * Every false positive below was produced by a real Roland crawl before the matcher
+ * required whole-token boundaries.
+ */
+const assert = require('assert');
+const gaps = require('../src/phases/gaps');
+
+const hunt = brand => gaps.huntList([
+    { gearName: 'Roland S-10', state: 'no_file' },
+    { gearName: 'Roland S-50', state: 'no_file' },
+    { gearName: 'Roland MC-707', state: 'no_file' },
+    { gearName: 'Roland D-20', state: 'no_file' },
+    { gearName: 'Roland D-70', state: 'no_file' },
+    { gearName: 'Roland AIRA TR-8S Rhythm Performer', state: 'no_file' },
+    { gearName: 'Roland JUNO-106', state: 'live' },
+], brand || 'Roland');
+
+const CASES = [
+    // --- the false positives that shipped, and must never come back --------------
+    ['CS-10EM_je01.pdf', null, 'S-10 must not match inside CS-10EM'],
+    ['JC-120H_OM.pdf', null, 'S-10 must not match inside JC-120H'],
+    ['AT-50_-70_e_70343801.pdf', null, 'no code here'],
+    ['MP-600_e_17047292.pdf', null, 'no code here'],
+    ['DS-50A_e1.pdf', null, 'S-50 must not match inside DS-50A'],
+    ['S-100_manual.pdf', null, 'S-10 must not match the longer S-100'],
+    ['general_catalogue.pdf', null, 'nothing to match'],
+    ['RH-D20_je1.pdf', null, 'D-20 must not match inside the RH-D20 headphones'],
+    ['SC-D70_e1.pdf', null, 'D-70 must not match inside the SC-D70 module'],
+    // --- the ones that must match -----------------------------------------------
+    ['S-10_owners_manual.pdf', 'Roland S-10', 'the real S-10'],
+    ['s10_e.pdf', 'Roland S-10', 'separators are optional'],
+    ['mc707_eng01.pdf', 'Roland MC-707', 'MC-707 without the dash'],
+    ['tr-8s_eng02_W.pdf', 'Roland AIRA TR-8S Rhythm Performer', 'code with a letter suffix'],
+];
+
+let failed = 0;
+for (const [file, want, why] of CASES) {
+    const m = gaps.matchGap({ url: 'https://example.com/' + file, linkText: '' }, hunt());
+    const got = m ? m.gap.gearName : null;
+    try {
+        assert.strictEqual(got, want);
+        console.log('  ok   ' + file.padEnd(28) + why);
+    } catch (e) {
+        failed++;
+        console.log('  FAIL ' + file.padEnd(28) + 'expected ' + want + ', got ' + got);
+    }
+}
+
+// Gear already answering is never a target.
+assert.ok(!hunt().some(g => g.gearName === 'Roland JUNO-106'), 'live gear must not be hunted');
+console.log('  ok   live gear is excluded from the hunt list');
+
+// Names with no distinctive token are reported, not guessed at.
+const vague = gaps.modelCodes('Moog One', 'Moog');
+assert.strictEqual(vague.codes.length, 0, '"Moog One" is too generic to match on');
+console.log('  ok   "Moog One" yields no key rather than matching everything');
+
+// Word-based names keep their separators.
+const mini = gaps.huntList([{ gearName: 'Korg minilogue xd', state: 'no_file' }], 'Korg');
+assert.ok(gaps.matchGap({ url: 'https://x/minilogue_xd_OM_E.pdf' }, mini), 'minilogue xd should match');
+assert.ok(!gaps.matchGap({ url: 'https://x/minilogue_bass_OM.pdf' }, mini), 'minilogue bass is a different machine');
+console.log('  ok   word-based names match across separators but not across models');
+
+if (failed) { console.error(failed + ' case(s) failed'); process.exit(1); }
+console.log('all gap-matching tests passed');

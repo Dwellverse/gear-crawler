@@ -130,15 +130,30 @@ async function politeFetch(db, url, opts = {}) {
         const budget = manifest.budget(db, 'requests_total');
         if (budget.exhausted) throw new Blocked(`request budget spent (${budget.cap})`, 'budget');
 
-        await waitTurn(db, host, delayMs);
-        manifest.spend(db, 'requests_total', 1);   // counted before the call, so a crash still costs it
+        // A 5xx or a dropped connection is the server having a moment, not an answer.
+        // Korg returned seven 504s in one run and every one of those pages was simply
+        // lost. Two extra tries, each after a longer wait than the host's own crawl
+        // delay, recovers them without pushing on a site that is struggling. A 4xx is a
+        // real answer and is never retried.
+        const attempts = 3;
+        let res, lastErr;
+        for (let i = 0; i < attempts; i++) {
+            if (i > 0) await waitTurn(db, host, delayMs * (i + 1));
+            else await waitTurn(db, host, delayMs);
 
-        let res;
-        try {
-            res = await rawFetch(url, opts);
-        } catch (e) {
+            manifest.spend(db, 'requests_total', 1);   // counted before the call, so a crash still costs it
+            try {
+                res = await rawFetch(url, opts);
+                lastErr = null;
+                if (res.status < 500) break;           // 2xx, 3xx and 4xx are all answers
+            } catch (e) {
+                lastErr = e;
+                res = null;
+            }
+        }
+        if (!res) {
             noteError(db, host, null);
-            throw e;
+            throw lastErr || new Error('request failed');
         }
 
         if (!res.ok) {

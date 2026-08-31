@@ -34,6 +34,7 @@ brands:
   - name: Arturia
     homepage: https://www.arturia.com
     support:
+      - https://www.arturia.com/support/downloads-manuals
       - https://www.arturia.com/support
   - name: Elektron
     homepage: https://www.elektron.se

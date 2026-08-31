@@ -1,8 +1,12 @@
 .audit.json
 .env
+.gapreport.json
 .probe.json
 .serve.log
+.sourcing-queue.html
+handoff-run.log
 hunt-run.log
+hunt2.log
 manifest.sqlite*
 node_modules/
 reports/*.jsonl

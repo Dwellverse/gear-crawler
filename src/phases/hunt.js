@@ -27,17 +27,6 @@ function directory() {
     return YAML.parse(fs.readFileSync(DIRECTORY, 'utf8')).brands || [];
 }
 
-/** Pull a brand's gaps to the front of the crawl frontier. */
-function priorityFor(hunt) {
-    const res = hunt.flatMap(g => g.codes.map(c => gaps.codeRegex(c)));
-    return (url, linkText) => {
-        const hay = (url + ' ' + (linkText || '')).toLowerCase();
-        for (const re of res) if (re.test(hay)) return 2;
-        // Manual and download pages beat everything else that is not a named gap.
-        return /manual|download|support|document/i.test(hay) ? 1 : 0;
-    };
-}
-
 /**
  * Hunt one brand. Returns what it found without deciding whether to keep it, so the
  * caller can run this read-only.
@@ -70,7 +59,7 @@ async function huntBrand(db, entry, { maxPages = 200, maxDepth = 3, log = () => 
 
     let found = [];
     try {
-        found = await strategies.discover(db, brand, { log, priority: priorityFor(hunt) });
+        found = await strategies.discover(db, brand, { log });
     } catch (e) {
         return { brandName, error: e.blocked ? `blocked: ${e.message}` : e.message, gaps: hunt.length };
     }
@@ -133,4 +122,4 @@ ${t.brand} — ${t.missing} with no manual, ${t.live} answering`);
     return { targets: targets.length, results: out, added: totalAdded };
 }
 
-module.exports = { run, huntBrand, record, priorityFor, directory };
+module.exports = { run, huntBrand, record, directory };

@@ -14,7 +14,9 @@ const net = require('../net');
 
 // Drivers, installers and marketing are not manuals. Firmware *release notes* are kept —
 // they answer real questions — while firmware *binaries* are not.
-const REJECT = /(driver|firmware[-_.]?\d|\.zip|\.exe|\.dmg|\.pkg|installer|software|catalog|brochure|price|poster|dealer)/i;
+// Blank sheets and patch books are not manuals — they are worksheets with almost no
+// prose, and ingesting one adds noise under a real gear name.
+const REJECT = /(driver|firmware[-_.]?\d|\.zip|\.exe|\.dmg|\.pkg|installer|software|catalog|brochure|price|poster|dealer|blank[-_ ]?sheet|patch[-_ ]?book|patch[-_ ]?sheet|blank[-_ ]?chart)/i;
 const PDF = /\.pdf(\?|$)/i;
 
 // v1 indexes English only. Manufacturers mark the language in the filename far more
@@ -126,7 +128,7 @@ async function json_api(db, brand, { log }) {
  * html_crawl — bounded breadth-first walk from the support entrypoints.
  * Same host only, depth-limited, page-limited. The last resort, and the noisiest.
  */
-async function html_crawl(db, brand, { log, priority }) {
+async function html_crawl(db, brand, { log }) {
     const cfg = brand.discovery || {};
     const follow = (cfg.follow_patterns || []).map(p => new RegExp(p, 'i'));
     const maxDepth = cfg.max_depth ?? 2;
@@ -134,23 +136,16 @@ async function html_crawl(db, brand, { log, priority }) {
 
     const found = new Map();
     const seen = new Set();
-    let queue = brand.entrypoints.map(url => ({ url, depth: 0, score: 0 }));
+    let queue = brand.entrypoints.map(url => ({ url, depth: 0 }));
 
-    // With a page budget far smaller than the site, the order of the frontier decides
-    // what we actually see. `priority` lets the caller pull pages that mention the gear
-    // we are missing to the front, so a 200-page budget is spent on the 200 pages most
-    // likely to carry those manuals instead of the first 200 in link order.
-    const take = () => {
-        if (!priority) return queue.shift();
-        let best = 0;
-        for (let i = 1; i < queue.length; i++) {
-            if (queue[i].score > queue[best].score) best = i;
-        }
-        return queue.splice(best, 1)[0];
-    };
-
+    // Breadth-first, in link order. Two attempts at scoring the frontier — pulling
+    // pages that name missing gear to the front, then adding that to a manual/download
+    // bonus — both did far worse than this on the same budget: measured on Roland at 40
+    // pages, link order found 381 PDFs and filled 2 gaps, while either ordering found 0.
+    // Manufacturers put manuals on index pages near the entry point, and any reordering
+    // dives into product marketing instead. Left as it is, deliberately.
     while (queue.length && seen.size < maxPages) {
-        const { url, depth } = take();
+        const { url, depth } = queue.shift();
         if (seen.has(url)) continue;
         seen.add(url);
 
@@ -158,7 +153,12 @@ async function html_crawl(db, brand, { log, priority }) {
         try {
             html = await net.fetchText(db, url);
         } catch (e) {
-            if (e.blocked) throw e;          // robots or budget — the caller decides
+            // A spent budget stops everything; one disallowed page does not. Rethrowing
+            // both meant a single robots rule mid-walk aborted the whole brand — Arturia
+            // died on /support/register-your-product with 23 gaps unexamined. Skipping
+            // the page respects robots just as completely as abandoning the crawl.
+            if (e.blocked && e.kind === 'budget') throw e;
+            if (e.blocked) { log(`  skipped (robots): ${url}`); continue; }
             log(`  page ${url}: ${e.message}`);
             continue;
         }
@@ -172,7 +172,7 @@ async function html_crawl(db, brand, { log, priority }) {
             if (depth >= maxDepth) continue;
             if (net.hostOf(link.url) !== host) continue;                 // never leave the brand's site
             if (follow.length && !follow.some(re => re.test(new URL(link.url).pathname))) continue;
-            if (!seen.has(link.url)) queue.push({ url: link.url, depth: depth + 1, score: priority ? priority(link.url, link.linkText) : 0 });
+            if (!seen.has(link.url)) queue.push({ url: link.url, depth: depth + 1 });
         }
     }
     log(`  walked ${seen.size} page(s)`);

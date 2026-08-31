@@ -102,13 +102,46 @@ function huntList(gear, brandName) {
  * Does this document fill one of the gaps? Returns the gap it fills, or null.
  * A code match is required — a loose name overlap is not enough to claim identity.
  */
+/**
+ * Words that separate one machine from another that shares its model code. The ARP 2600
+ * FS, the 2600 M and the original 2600 are three instruments; "Korg Collection MS-20" is
+ * software and the "MS-20 Kit" is hardware. A code match cannot tell them apart, and
+ * filing one manual under another answers confidently about the wrong machine.
+ */
+const VARIANT = new Set([
+    'fs', 'm', 'kit', 'collection', 'module', 'rack', 'keyboard', 'desktop', 'tabletop',
+    'mkii', 'mkiii', 'mk2', 'mk3', 'ii', 'iii', 'plus', 'pro', 'se', 'xl', 'mini',
+    'original', 'reissue', 'compact', 'studio', 'live',
+]);
+
+function variantsIn(text) {
+    return new Set(
+        String(text || '').toLowerCase().split(/[^a-z0-9]+/).filter(w => VARIANT.has(w))
+    );
+}
+
+/**
+ * Does this document fill one of the gaps? Returns the gap it fills, or null.
+ * A code match is required — a loose name overlap is not enough to claim identity —
+ * and any variant word in the gear's name must also appear on the document.
+ */
 function matchGap(doc, hunt) {
     let hay = '';
     try { hay = decodeURIComponent(doc.url || ''); } catch (e) { hay = String(doc.url || ''); }
     hay = (hay + ' ' + (doc.linkText || '')).toLowerCase();
 
+    const docVariants = variantsIn(hay);
+
     let best = null;
     for (const g of hunt) {
+        // Every variant word in the gear's name must be on the document too. Without
+        // this, "Korg ARP 2600 FS" claimed the 2600 M blank sheet and the original 2600
+        // manual, and "Korg Collection MS-20" claimed the MS-20 Kit hardware manuals.
+        const wanted = variantsIn(g.gearName);
+        let ok = true;
+        for (const v of wanted) if (!docVariants.has(v)) { ok = false; break; }
+        if (!ok) continue;
+
         for (const c of g.codes) {
             if (!codeRegex(c).test(hay)) continue;
             // Prefer the most specific code: MC-707 beats MC-7 on the same filename.

@@ -59,6 +59,22 @@ const vague = gaps.modelCodes('Moog One', 'Moog');
 assert.strictEqual(vague.codes.length, 0, '"Moog One" is too generic to match on');
 console.log('  ok   "Moog One" yields no key rather than matching everything');
 
+// Variants of the same model code are different instruments. Every case here was
+// recorded as a real match by a Korg hunt before the variant guard existed.
+const korg = gaps.huntList([
+    { gearName: 'Korg ARP 2600 FS', state: 'no_file' },
+    { gearName: 'Korg Collection MS-20', state: 'no_file' },
+    { gearName: 'Korg ARP Odyssey', state: 'no_file' },
+], 'Korg');
+const noMatch = (linkText, file) =>
+    assert.strictEqual(gaps.matchGap({ url: 'https://cdn.korg.com/' + file, linkText }, korg), null);
+
+noMatch('ARP 2600 M Blank Sheet', 'ARP2600-M_BlankSheet.pdf');      // the M, not the FS
+noMatch('ARP 2600 Original Manual', 'ARP2600_Original_OM.pdf');     // the original, not the FS
+noMatch("MS-20 Kit Original Owner's Manual", 'MS20_E.pdf');         // the Kit, not the Collection
+noMatch('MS-20 Kit Patch Book', 'MS20_PatchBook.pdf');              // the Kit, not the Collection
+console.log('  ok   model variants (FS / M / Kit / Collection) are kept apart');
+
 // Word-based names keep their separators.
 const mini = gaps.huntList([{ gearName: 'Korg minilogue xd', state: 'no_file' }], 'Korg');
 assert.ok(gaps.matchGap({ url: 'https://x/minilogue_xd_OM_E.pdf' }, mini), 'minilogue xd should match');

@@ -9,151 +9,252 @@
 brands:
   - name: Roland
     homepage: https://www.roland.com
-    support: [https://www.roland.com/global/support/by_product/, https://www.roland.com/global/support/]
+    support:
+      - https://www.roland.com/global/support/by_product/
+      - https://www.roland.com/global/support/
   - name: Boss
     homepage: https://www.boss.info
-    support: [https://www.boss.info/global/support/by_product/]
+    support:
+      - https://www.boss.info/global/support/by_product/
   - name: Korg
     homepage: https://www.korg.com
-    support: [https://www.korg.com/us/support/download/, https://www.korg.com/us/support/]
+    support:
+      - https://www.korg.com/us/support/download/
+      - https://www.korg.com/us/support/
   - name: Yamaha
     homepage: https://usa.yamaha.com
-    support: [https://usa.yamaha.com/support/manuals/, https://download.yamaha.com/]
+    support:
+      - https://usa.yamaha.com/support/manuals/
+      - https://download.yamaha.com/
+    unusable: declines_automated_access
   - name: Moog
     homepage: https://www.moogmusic.com
-    support: [https://www.moogmusic.com/support, https://www.moogmusic.com/products]
+    support:
+      - https://www.moogmusic.com/support
+      - https://www.moogmusic.com/products
   - name: Arturia
     homepage: https://www.arturia.com
-    support: [https://www.arturia.com/support/downloads, https://www.arturia.com/support]
+    support:
+      - https://www.arturia.com/support/downloads
+      - https://www.arturia.com/support
   - name: Elektron
     homepage: https://www.elektron.se
-    support: [https://www.elektron.se/en/support]
+    support:
+      - https://www.elektron.se/en/support
   - name: Novation
     homepage: https://novationmusic.com
-    support: [https://novationmusic.com/support, https://downloads.novationmusic.com/]
+    support:
+      - https://novationmusic.com/support
+      - https://downloads.novationmusic.com/
   - name: Focusrite
     homepage: https://focusrite.com
-    support: [https://support.focusrite.com/, https://focusrite.com/downloads]
+    support:
+      - https://support.focusrite.com/
+      - https://focusrite.com/downloads
   - name: Native Instruments
     homepage: https://www.native-instruments.com
-    support: [https://support.native-instruments.com/, https://www.native-instruments.com/en/support/downloads/]
+    support:
+      - https://support.native-instruments.com/
+      - https://www.native-instruments.com/en/support/downloads/
   - name: Universal Audio
     homepage: https://www.uaudio.com
-    support: [https://help.uaudio.com/, https://www.uaudio.com/support]
+    support:
+      - https://help.uaudio.com/
+      - https://www.uaudio.com/support
+    unusable: declines_automated_access
   - name: Behringer
     homepage: https://www.behringer.com
-    support: [https://www.behringer.com/downloads.html]
+    support:
+      - https://www.behringer.com/
+      - https://www.behringer.com/downloads.html
   - name: Sequential
     homepage: https://sequential.com
-    support: [https://sequential.com/support/, https://sequential.com/downloads/]
+    support:
+      - https://sequential.com/support/
+      - https://sequential.com/downloads/
+    unusable: javascript_only
   - name: Teenage Engineering
     homepage: https://teenage.engineering
-    support: [https://teenage.engineering/guides, https://teenage.engineering/downloads]
+    support:
+      - https://teenage.engineering/guides
+      - https://teenage.engineering/downloads
   - name: Akai Professional
     homepage: https://www.akaipro.com
-    support: [https://www.akaipro.com/support, https://www.akaipro.com/downloads]
+    support:
+      - https://www.akaipro.com/support
+      - https://www.akaipro.com/downloads
   - name: Pioneer DJ
     homepage: https://www.pioneerdj.com
-    support: [https://www.pioneerdj.com/en/support/documents/]
+    support:
+      - https://www.pioneerdj.com/en/support/documents/
+    unusable: declines_automated_access
   - name: Allen & Heath
     homepage: https://www.allen-heath.com
-    support: [https://www.allen-heath.com/support/, https://www.allen-heath.com/resources/]
+    support:
+      - https://www.allen-heath.com/support/
+      - https://www.allen-heath.com/resources/
+    unusable: javascript_only
   - name: Shure
     homepage: https://www.shure.com
-    support: [https://www.shure.com/en-US/support/downloads]
+    support:
+      - https://www.shure.com/en-US/support/downloads
   - name: Sennheiser
     homepage: https://www.sennheiser.com
-    support: [https://www.sennheiser.com/en-us/support/downloads]
+    support:
+      - https://www.sennheiser.com/en-us/support
+      - https://www.sennheiser.com/en-us/support/downloads
   - name: Audio-Technica
     homepage: https://www.audio-technica.com
-    support: [https://www.audio-technica.com/en-us/support/manuals/]
+    support:
+      - https://www.audio-technica.com/en-us/support
+      - https://www.audio-technica.com/en-us/support/manuals/
   - name: RME
     homepage: https://rme-audio.de
-    support: [https://rme-audio.de/downloads.html]
+    support:
+      - https://rme-audio.de/downloads.html
   - name: MOTU
     homepage: https://motu.com
-    support: [https://motu.com/en-us/download/, https://motu.com/support]
+    support:
+      - https://motu.com/en-us/download/
+      - https://motu.com/support
   - name: PreSonus
     homepage: https://www.presonus.com
-    support: [https://www.presonus.com/support/downloads, https://www.presonus.com/products]
+    support:
+      - https://www.presonus.com/support/downloads
+      - https://www.presonus.com/products
   - name: Ableton
     homepage: https://www.ableton.com
-    support: [https://www.ableton.com/en/manual/, https://www.ableton.com/en/help/]
+    support:
+      - https://www.ableton.com/en/manual/
+      - https://www.ableton.com/en/help/
   - name: Line 6
     homepage: https://line6.com
-    support: [https://line6.com/support/manuals/]
+    support:
+      - https://line6.com/support/manuals/
   - name: Fender
     homepage: https://www.fender.com
-    support: [https://www.fender.com/pages/support, https://support.fender.com/]
+    support:
+      - https://www.fender.com/pages/support
+      - https://support.fender.com/
+    unusable: declines_automated_access
   - name: Nord
     homepage: https://www.nordkeyboards.com
-    support: [https://www.nordkeyboards.com/downloads, https://www.nordkeyboards.com/support]
+    support:
+      - https://www.nordkeyboards.com/downloads
+      - https://www.nordkeyboards.com/support
   - name: ADAM Audio
     homepage: https://www.adam-audio.com
-    support: [https://www.adam-audio.com/en/support/downloads/]
+    support:
+      - https://www.adam-audio.com/en/support/downloads/
+    unusable: unreachable
   - name: Genelec
     homepage: https://www.genelec.com
-    support: [https://www.genelec.com/support-technology/manuals-and-documentation]
+    support:
+      - https://www.genelec.com/support-technology/manuals-and-documentation
+    unusable: unreachable
   - name: KRK
     homepage: https://www.krkmusic.com
-    support: [https://www.krkmusic.com/pages/support]
+    support:
+      - https://www.krkmusic.com/support
+      - https://www.krkmusic.com/pages/support
   - name: Strymon
     homepage: https://www.strymon.net
-    support: [https://www.strymon.net/support/, https://www.strymon.net/downloads/]
+    support:
+      - https://www.strymon.net/support/
+      - https://www.strymon.net/downloads/
   - name: Eventide
     homepage: https://www.eventideaudio.com
-    support: [https://www.eventideaudio.com/support/, https://www.eventideaudio.com/downloads/]
+    support:
+      - https://www.eventideaudio.com/support/
+      - https://www.eventideaudio.com/downloads/
   - name: Make Noise
     homepage: https://www.makenoisemusic.com
-    support: [https://www.makenoisemusic.com/manuals]
+    support:
+      - https://www.makenoisemusic.com/manuals
+    unusable: javascript_only
   - name: Intellijel
     homepage: https://intellijel.com
-    support: [https://intellijel.com/support/manuals/]
+    support:
+      - https://intellijel.com/support/
+      - https://intellijel.com/support/manuals/
   - name: Erica Synths
     homepage: https://www.ericasynths.lv
-    support: [https://www.ericasynths.lv/shop/, https://www.ericasynths.lv/support/]
+    support:
+      - https://www.ericasynths.lv/shop/
+      - https://www.ericasynths.lv/support/
   - name: Expert Sleepers
     homepage: https://www.expert-sleepers.co.uk
-    support: [https://www.expert-sleepers.co.uk/downloads.html]
+    support:
+      - https://www.expert-sleepers.co.uk/downloads.html
   - name: Tascam
     homepage: https://tascam.com
-    support: [https://tascam.com/us/support/, https://tascam.com/us/downloads/]
+    support:
+      - https://tascam.com/us/support/
+      - https://tascam.com/us/downloads/
+    unusable: declines_automated_access
   - name: Zoom
     homepage: https://zoomcorp.com
-    support: [https://zoomcorp.com/en/us/support/, https://zoomcorp.com/en/us/downloads/]
+    support:
+      - https://zoomcorp.com/en/us/support/
+      - https://zoomcorp.com/en/us/downloads/
   - name: Mackie
     homepage: https://mackie.com
-    support: [https://mackie.com/en/support/, https://mackie.com/en/downloads]
+    support:
+      - https://mackie.com/en/support/
+      - https://mackie.com/en/downloads
   - name: Neumann
     homepage: https://www.neumann.com
-    support: [https://www.neumann.com/en-us/support/downloads/]
+    support:
+      - https://www.neumann.com/
+      - https://www.neumann.com/en-us/support/downloads/
   - name: Solid State Logic
     homepage: https://solidstatelogic.com
-    support: [https://solidstatelogic.com/support, https://solidstatelogic.com/downloads]
+    support:
+      - https://solidstatelogic.com/support
+      - https://solidstatelogic.com/downloads
   - name: Audient
     homepage: https://audient.com
-    support: [https://audient.com/support/, https://audient.com/downloads/]
+    support:
+      - https://audient.com/support/
+      - https://audient.com/downloads/
+    unusable: javascript_only
   - name: Marshall
     homepage: https://marshall.com
-    support: [https://marshall.com/support, https://marshall.com/live-for-music/support]
+    support:
+      - https://marshall.com/support
+      - https://marshall.com/live-for-music/support
   - name: Blackstar
     homepage: https://blackstaramps.com
-    support: [https://blackstaramps.com/support/, https://blackstaramps.com/downloads/]
+    support:
+      - https://blackstaramps.com/support/
+      - https://blackstaramps.com/downloads/
   - name: Orange
     homepage: https://orangeamps.com
-    support: [https://orangeamps.com/support/, https://orangeamps.com/downloads/]
+    support:
+      - https://orangeamps.com/support/
+      - https://orangeamps.com/downloads/
   - name: Electro-Harmonix
     homepage: https://www.ehx.com
-    support: [https://www.ehx.com/support/, https://www.ehx.com/products/]
+    support:
+      - https://www.ehx.com/support/
+      - https://www.ehx.com/products/
   - name: Empress Effects
     homepage: https://empresseffects.com
-    support: [https://empresseffects.com/pages/manuals]
+    support:
+      - https://empresseffects.com/pages/support
+      - https://empresseffects.com/pages/manuals
   - name: Chase Bliss
     homepage: https://www.chasebliss.com
-    support: [https://www.chasebliss.com/manuals, https://www.chasebliss.com/support]
+    support:
+      - https://www.chasebliss.com/manuals
+      - https://www.chasebliss.com/support
   - name: Warm Audio
     homepage: https://warmaudio.com
-    support: [https://warmaudio.com/support/, https://warmaudio.com/downloads/]
+    support:
+      - https://warmaudio.com/support/
+      - https://warmaudio.com/downloads/
   - name: Denon DJ
     homepage: https://www.denondj.com
-    support: [https://www.denondj.com/support, https://www.denondj.com/downloads]
+    support:
+      - https://www.denondj.com/support
+      - https://www.denondj.com/downloads

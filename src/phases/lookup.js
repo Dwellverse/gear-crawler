@@ -24,6 +24,12 @@ const DIRECTORY = path.join(__dirname, '..', '..', 'registry', 'directory.yaml')
 
 const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 
+const UNUSABLE_REASON = {
+    declines_automated_access: 'This site refuses our crawler (403). We do not disguise the crawler to get around that, so these manuals need sourcing by hand.',
+    javascript_only: 'Their downloads page is built by JavaScript, so there is nothing in the HTML to follow. It needs a per-brand strategy against their own data feed.',
+    unreachable: 'Their site did not answer at all from here. Could be geo-blocking or a network fault — worth retrying later.',
+};
+
 function directory() {
     if (!fs.existsSync(DIRECTORY)) return [];
     return (YAML.parse(fs.readFileSync(DIRECTORY, 'utf8')).brands || []);
@@ -63,6 +69,13 @@ async function preview(db, { name, homepage, supportUrls, log = () => {} }) {
     const brandName = (known && known.name) || name;
     const entrypoints = (supportUrls && supportUrls.length ? supportUrls : (known ? known.support : []))
         .filter(Boolean);
+
+    if (known && known.unusable && !(supportUrls && supportUrls.length)) {
+        return {
+            brandName, directoryHit: true, blind: true, reason: known.unusable,
+            error: UNUSABLE_REASON[known.unusable] || `This brand cannot be walked automatically (${known.unusable}).`,
+        };
+    }
 
     if (!entrypoints.length) {
         return {
@@ -110,10 +123,19 @@ async function preview(db, { name, homepage, supportUrls, log = () => {} }) {
         };
     });
 
+    // Finding nothing means we could not read their site — a dead entry point, a page
+    // rendered by JavaScript, or a refusal. Reporting that as "0 we do not have" reads
+    // as a clean bill of health and is the most misleading thing this tool could say.
+    const blind = rows.length === 0;
+
     return {
         brandName,
         entrypoints,
         directoryHit: !!known,
+        blind,
+        error: blind
+            ? `Found no manuals on ${entrypoints.join(', ')}. That is not a clean result — it means we could not read their site, so we do not know what is missing. Check the entry point, or paste the page that lists their manuals.`
+            : undefined,
         have: {
             live: (have.gear || []).filter(g => g.state === 'live').length,
             listed: (have.gear || []).length,

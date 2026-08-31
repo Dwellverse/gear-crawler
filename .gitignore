@@ -1,5 +1,7 @@
-node_modules/
-manifest.sqlite*
+.audit.json
 .env
-reports/*.jsonl
+.probe.json
 .serve.log
+manifest.sqlite*
+node_modules/
+reports/*.jsonl

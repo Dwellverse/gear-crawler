@@ -184,7 +184,10 @@ $('lookup').addEventListener('click', async () => {
   PREVIEW = d;
 
   if (d.error) {
-    $('lookup-result').innerHTML = '<div class="muted">' + esc(d.error) + '</div>';
+    $('lookup-result').innerHTML =
+      '<div class="row" style="margin-top:12px"><span class="pill bad">could not read their site</span>' +
+      (d.have && d.have.live ? '<span class="pill ok">' + d.have.live + ' already answering</span>' : '') +
+      '</div><div class="muted" style="margin-top:8px">' + esc(d.error) + '</div>';
     return;
   }
 

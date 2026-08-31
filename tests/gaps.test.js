@@ -75,6 +75,36 @@ noMatch("MS-20 Kit Original Owner's Manual", 'MS20_E.pdf');         // the Kit, 
 noMatch('MS-20 Kit Patch Book', 'MS20_PatchBook.pdf');              // the Kit, not the Collection
 console.log('  ok   model variants (FS / M / Kit / Collection) are kept apart');
 
+// A name is only this machine's name if nothing more specific follows it. Every case
+// here was recorded as a real match by an Arturia hunt: the BeatStep claimed the
+// BeatStep Pro's manual, and the AstroLab claimed the AstroLab 37's.
+const arturia = gaps.huntList([
+    { gearName: 'Arturia BeatStep', state: 'no_file' },
+    { gearName: 'Arturia AstroLab', state: 'no_file' },
+    { gearName: 'Arturia KeyStep', state: 'no_file' },
+    { gearName: 'Arturia MatrixBrute', state: 'no_file' },
+], 'Arturia');
+const arturiaCases = [
+    ['BeatStep_Manual_1_0_1_EN.pdf', 'Arturia BeatStep'],
+    ['beatstep-pro_Manual_2_0_EN.pdf', null],          // the Pro is a different machine
+    ['BeatStepPro-CheatSheet.pdf', null],
+    ['astrolab_Manual_1_5_1_EN.pdf', 'Arturia AstroLab'],
+    ['astrolab-37_Manual_1_0_0_EN.pdf', null],         // the 37 is a different machine
+    ['KeyStep_Manual_1_1_2_EN.pdf', 'Arturia KeyStep'],
+    ['keystep-pro_Manual_2_5_2_EN.pdf', null],
+    ['matrixbrute_Manual_2_0_3_EN.pdf', 'Arturia MatrixBrute'],
+];
+for (const [file, want] of arturiaCases) {
+    const m = gaps.matchGap({ url: 'https://dl.arturia.net/' + file, linkText: '' }, arturia);
+    assert.strictEqual(m ? m.gap.gearName : null, want, file);
+}
+console.log('  ok   a more specific model on the document does not claim a broader gap');
+
+// The qualifier guard must not rely on : an underscore is a word character, so
+// "pro" never fires on "beatstep-pro_Manual.pdf" — the exact filename it must reject.
+assert.strictEqual(gaps.matchGap({ url: 'https://x/beatstep-pro_Manual.pdf' }, arturia), null);
+console.log('  ok   a qualifier followed by an underscore is still caught');
+
 // Word-based names keep their separators.
 const mini = gaps.huntList([{ gearName: 'Korg minilogue xd', state: 'no_file' }], 'Korg');
 assert.ok(gaps.matchGap({ url: 'https://x/minilogue_xd_OM_E.pdf' }, mini), 'minilogue xd should match');

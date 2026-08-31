@@ -1,0 +1,56 @@
+/**
+ * Re-judge everything the crawler has recorded but not yet handed off.
+ *
+ * Match rules get corrected as false positives turn up, and records written under an
+ * older rule do not fix themselves. This re-runs the current matcher over every
+ * discovered document and drops the ones that no longer hold — cheaper than a re-crawl,
+ * and it means a rule fix reaches records that already exist rather than only future
+ * ones. Handed-off documents are never touched: those are the dedup receipts.
+ */
+
+const gaps = require('./gaps');
+
+async function run(db, { apply = false, log = console.log } = {}) {
+    const rows = db.prepare(`
+        SELECT id, brand_slug, gear_name, source_url, link_text
+        FROM documents WHERE state = 'discovered' AND gear_name IS NOT NULL
+    `).all();
+
+    if (!rows.length) return { checked: 0, dropped: 0 };
+
+    // One coverage call per brand, not per document.
+    const byBrand = new Map();
+    for (const r of rows) {
+        if (!byBrand.has(r.brand_slug)) byBrand.set(r.brand_slug, []);
+        byBrand.get(r.brand_slug).push(r);
+    }
+
+    let checked = 0;
+    const drop = [];
+    for (const [slug, docs] of byBrand) {
+        // The manifest stores a slug; the catalogue is keyed by display name, which the
+        // gear name carries as its prefix.
+        const brandName = (docs[0].gear_name || '').split(' ')[0];
+        const cov = await gaps.coverageFor(brandName);
+        if (cov.error) { log(`  ${slug}: cannot check (${cov.error})`); continue; }
+        const hunt = gaps.huntList(cov.gear || [], brandName);
+
+        for (const d of docs) {
+            checked++;
+            const hit = gaps.matchGap({ url: d.source_url, linkText: d.link_text }, hunt);
+            if (!hit) {
+                drop.push({ ...d, why: 'no longer matches any gap' });
+            } else if (hit.gap.gearName !== d.gear_name) {
+                drop.push({ ...d, why: `now matches ${hit.gap.gearName}` });
+            }
+        }
+    }
+
+    for (const d of drop) {
+        log(`  drop  ${String(d.gear_name).padEnd(30)} ${decodeURIComponent(d.source_url.split('/').pop()).slice(0, 44)}  — ${d.why}`);
+        if (apply) db.prepare('DELETE FROM documents WHERE id = ?').run(d.id);
+    }
+    return { checked, dropped: drop.length, applied: apply };
+}
+
+module.exports = { run };

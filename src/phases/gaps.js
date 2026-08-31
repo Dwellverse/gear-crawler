@@ -60,7 +60,18 @@ function codeRegex(c) {
     // The character before must not be alphanumeric, and must not be alphanumeric
     // followed by a separator: "RH-D20" and "SC-D70" are their own model codes, not a
     // boundary followed by D-20 and D-70. Both of those shipped as false positives.
-    return new RegExp('(?<![a-z0-9])(?<![a-z0-9][-_. ])' + body + '(?![a-z0-9])', 'i');
+    //
+    // The same has to hold on the right, and for the same reason. A name is only this
+    // machine's name if nothing more specific follows it: "beatstep-pro" is not the
+    // BeatStep, "astrolab-37" is not the AstroLab, and "Analog-Four-MKII" is not the
+    // Analog Four. So a qualifier or a model number immediately after the match
+    // disqualifies it — the more specific document belongs to the more specific gap.
+    // Note the explicit lookahead rather than \b: an underscore is a word character, so
+    // "pro\b" never fires on "beatstep-pro_Manual.pdf" — the exact filename this guard
+    // exists to reject.
+    const QUALIFIER = '(?:pro|mk|mkii|mkiii|mk2|mk3|se|fs|kit|xl|plus|mini|module|rack|keys)(?![a-z0-9])';
+    const TRAIL = '(?![-_. ]?(?:\\d|' + QUALIFIER + '))';
+    return new RegExp('(?<![a-z0-9])(?<![a-z0-9][-_. ])' + body + '(?![a-z0-9])' + TRAIL, 'i');
 }
 
 /** Ask the app what this brand lists and what it can answer. */

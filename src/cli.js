@@ -122,6 +122,12 @@ async function main() {
                              maxDepth: parseInt(arg('max-depth', '3'), 10),
                              apply: has('apply'),
                          }); break;
+        case 'rejudge':  {
+                             const r = await require('./phases/rejudge').run(db, { apply: has('apply') });
+                             console.log(`
+${r.checked} checked, ${r.dropped} no longer hold` + (r.applied ? ' (removed)' : ' (dry run — pass --apply)'));
+                             break;
+                         }
         case 'handoff':  await require('./phases/handoff').run(db, {
                              limit: parseInt(arg('limit', '20'), 10), dryRun: has('dry-run'),
                          }); break;

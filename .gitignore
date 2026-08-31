@@ -2,6 +2,7 @@
 .env
 .probe.json
 .serve.log
+hunt-run.log
 manifest.sqlite*
 node_modules/
 reports/*.jsonl

@@ -31,11 +31,9 @@ brands:
     homepage: https://www.moogmusic.com
     support:
       - https://www.moogmusic.com/support
-      - https://www.moogmusic.com/products
   - name: Arturia
     homepage: https://www.arturia.com
     support:
-      - https://www.arturia.com/support/downloads
       - https://www.arturia.com/support
   - name: Elektron
     homepage: https://www.elektron.se
@@ -66,7 +64,6 @@ brands:
     homepage: https://www.behringer.com
     support:
       - https://www.behringer.com/
-      - https://www.behringer.com/downloads.html
   - name: Sequential
     homepage: https://sequential.com
     support:

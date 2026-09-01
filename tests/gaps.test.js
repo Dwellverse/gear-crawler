@@ -112,4 +112,34 @@ assert.ok(!gaps.matchGap({ url: 'https://x/minilogue_bass_OM.pdf' }, mini), 'min
 console.log('  ok   word-based names match across separators but not across models');
 
 if (failed) { console.error(failed + ' case(s) failed'); process.exit(1); }
+
+// A page may declare its own base for relative links. Ignoring it produced fourteen
+// Mackie documents whose URLs looked right and 404'd at handoff.
+const strategies = require('../src/strategies');
+{
+    const withBase = '<html><head><base href="https://mackie.com/"></head><body>'
+        + '<a href="img/file_resources/THUMP_GO_OM.pdf">Manual</a></body></html>';
+    const got = strategies.links(withBase, 'https://mackie.com/en/products/loudspeakers/thump-go')[0].url;
+    assert.strictEqual(got, 'https://mackie.com/img/file_resources/THUMP_GO_OM.pdf');
+
+    const noBase = '<html><body><a href="docs/manual.pdf">M</a></body></html>';
+    const got2 = strategies.links(noBase, 'https://example.com/a/b/page.html')[0].url;
+    assert.strictEqual(got2, 'https://example.com/a/b/docs/manual.pdf');
+    console.log('  ok   relative links resolve against <base href> when a page declares one');
+}
+
+// Only the newest edition of a manual is kept; unversioned documents are never dropped.
+const versions = require('../src/phases/versions');
+{
+    const docs = [
+        { f: 'metropolix_manual_v1.6_2025.09.24.pdf' },
+        { f: 'metropolix_manual_v1.3_2021.07.04.pdf' },
+        { f: 'THUMP_GO_OM.pdf' },
+        { f: 'THUMP GO_QSG.pdf' },
+    ];
+    const dropped = versions.supersededIds(docs, d => d.f).map(d => d.name);
+    assert.deepStrictEqual(dropped, ['metropolix_manual_v1.3_2021.07.04.pdf']);
+    console.log('  ok   superseded revisions are dropped and unversioned documents are kept');
+}
+
 console.log('all gap-matching tests passed');

@@ -88,12 +88,28 @@ const wanted = (url, text) => isPdf(url)
     && !REJECT.test(url) && !REJECT.test(publishedName(url)) && !REJECT.test(text || '')
     && !looksNonEnglish(url);
 
-/** Every <a> on a page, absolute and de-duplicated. */
+/**
+ * Every <a> on a page, absolute and de-duplicated.
+ *
+ * A page may declare its own base for relative links, and ignoring that produces URLs
+ * that look entirely plausible and do not exist. Mackie sets <base href="https://mackie.com/">
+ * and writes hrefs like "img/file_resources/THUMP_GO_OM.pdf"; resolved against the page
+ * path those became .../products/loudspeakers/thump-go/img/... — fourteen documents
+ * recorded, every one a 404 at handoff.
+ */
 function links(html, baseUrl) {
     const root = parse(html);
+
+    let base = baseUrl;
+    const declared = root.querySelector('base[href]');
+    if (declared) {
+        const href = declared.getAttribute('href');
+        try { base = new URL(href, baseUrl).toString(); } catch (e) { /* keep the page URL */ }
+    }
+
     const out = new Map();
     for (const a of root.querySelectorAll('a[href]')) {
-        const url = abs(a.getAttribute('href'), baseUrl);
+        const url = abs(a.getAttribute('href'), base);
         if (url) out.set(url, (a.text || '').replace(/\s+/g, ' ').trim());
     }
     return [...out].map(([url, linkText]) => ({ url, linkText }));

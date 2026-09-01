@@ -256,3 +256,68 @@ brands:
     support:
       - https://www.denondj.com/support
       - https://www.denondj.com/downloads
+
+  # Added 2026-09-01 from the expansion probe. The directory covered 50 of the 382 brands
+  # the catalogue names, and the brands it did cover had largely run out of gaps — so
+  # further yield has to come from makers it had never heard of. Each of these answered a
+  # support or manuals page directly. Terms have NOT been read by a person for any of
+  # them; robots.txt is honoured automatically, but a brand that objects in prose rather
+  # than in robots.txt would not be caught by that, so mark it `unusable` when found.
+  - name: Walrus Audio
+    homepage: https://www.walrusaudio.com
+    support:
+      - https://www.walrusaudio.com/pages/manuals
+  - name: Meris
+    homepage: https://www.meris.us
+    support:
+      - https://www.meris.us/support
+  - name: Squarp
+    homepage: https://squarp.net
+    support:
+      - https://squarp.net
+  - name: Kawai
+    homepage: https://www.kawai-global.com
+    support:
+      - https://www.kawai-global.com/support/downloads
+
+  # Reachable, but no PDF on the entry page itself. That is not evidence of no manuals:
+  # Elektron, a known-good brand, also shows only one PDF on its support page and yields
+  # 45 through links one hop deeper. These need the crawler's depth, not another probe.
+  - name: Waldorf
+    homepage: https://waldorfmusic.com
+    support:
+      - https://waldorfmusic.com/downloads/
+      - https://waldorfmusic.com
+  - name: Polyend
+    homepage: https://polyend.com
+    support:
+      - https://polyend.com/downloads/
+      - https://polyend.com
+  - name: Bastl Instruments
+    homepage: https://bastl-instruments.com
+    support:
+      - https://bastl-instruments.com/en/support
+  - name: Mutable Instruments
+    homepage: https://pichenettes.github.io
+    support:
+      - https://pichenettes.github.io/mutable-instruments-documentation
+  - name: JHS
+    homepage: https://www.jhspedals.info
+    support:
+      - https://www.jhspedals.info
+  - name: 4ms
+    homepage: https://4mscompany.com
+    support:
+      - https://4mscompany.com/support.php
+      - https://4mscompany.com
+  - name: ALM Busy Circuits
+    homepage: https://busycircuits.com
+    support:
+      - https://busycircuits.com
+  - name: Buchla
+    homepage: https://buchla.com
+    support:
+      - https://buchla.com
+
+  # Did not answer any of the tried homepages or support paths. Left out deliberately
+  # rather than guessed at: Doepfer, Ibanez, Casio, Dreadbox, Befaco, Instruo, Modal.

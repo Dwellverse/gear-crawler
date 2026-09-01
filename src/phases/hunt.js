@@ -44,7 +44,7 @@ async function huntBrand(db, entry, { maxPages = 200, maxDepth = 3, log = () => 
     const cov = await gaps.coverageFor(brandName);
     if (cov.error) return { brandName, error: cov.error };
     const hunt = gaps.huntList(cov.gear || [], brandName);
-    if (!hunt.length) return { brandName, gaps: 0, found: 0, fills: [] };
+    if (!hunt.length) return { brandName, gaps: 0, found: 0, filled: 0, fills: [] };
 
     const brand = {
         slug: norm(brandName), name: brandName,

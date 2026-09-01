@@ -151,8 +151,18 @@ function addDocument(db, { brandSlug, url, linkText, gearName }) {
     return res.changes === 1;
 }
 
-function documentsInState(db, state, limit = 50) {
-    return db.prepare('SELECT * FROM documents WHERE state = ? ORDER BY id LIMIT ?').all(state, limit);
+/**
+ * Documents in a state, oldest first.
+ *
+ * `namedOnly` selects in SQL rather than leaving the caller to filter afterwards. Handoff
+ * used to ask for `limit * 3` rows and drop the unnamed ones, so a run of documents the
+ * crawler could not identify sitting at the head of the queue starved everything behind
+ * them: three unnamed documents were enough to make `handoff --limit 1` report "nothing
+ * ready to hand off" while nine named ones waited.
+ */
+function documentsInState(db, state, limit = 50, { namedOnly = false } = {}) {
+    const where = namedOnly ? "state = ? AND gear_name IS NOT NULL AND gear_name != ''" : 'state = ?';
+    return db.prepare(`SELECT * FROM documents WHERE ${where} ORDER BY id LIMIT ?`).all(state, limit);
 }
 
 function setDocumentState(db, id, state, fields = {}) {

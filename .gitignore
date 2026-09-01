@@ -1,5 +1,6 @@
 .audit.json
 .env
+.expand.json
 .gapreport.json
 .images.json
 .probe.json
@@ -7,7 +8,9 @@
 .serve.log
 .sourcing-queue.html
 handoff-run.log
+handoff-wide.log
 hunt-run.log
+hunt-wide.log
 hunt2.log
 imgrun.log
 korg-run.log

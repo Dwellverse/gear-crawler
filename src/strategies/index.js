@@ -25,7 +25,10 @@ const PDF = /\.pdf(\?|$)/i;
 // downloading a Japanese manual, extracting it, and discarding it three phases later.
 // Word-boundaried so "JA" cannot match inside a model name, and "-de" cannot match
 // "digitakt-demo".
-const NON_ENGLISH = /(?:^|[-_.]|\d)(ja|jp|jpn|de|deu|ger|fr|fra|es|esp|spa|it|ita|nl|pt|pl|ru|sv|zh|cn|ko|kr|tw)(?=[-_.]|$)/i;
+// Every language code a maker has actually used on a file we have seen, not just the
+// obvious few. Novation ships the Launchpad guide in twenty-odd editions and the
+// short list let Bulgarian, Danish, Greek, Croatian, Latvian and Lithuanian through.
+const NON_ENGLISH = /(?:^|[-_.]|\d)(ja|jp|jpn|de|deu|ger|fr|fra|es|esp|spa|it|ita|nl|nld|pt|por|pl|pol|ru|rus|sv|swe|zh|cn|chs|cht|ko|kr|kor|tw|bg|bul|da|dan|cs|ces|cze|hu|hun|el|ell|gre|tr|tur|uk|ukr|ro|ron|rum|sk|slk|sl|slv|hr|hrv|lt|lit|lv|lav|et|est|fi|fin|no|nb|nor|sr|srp|vi|vie|th|tha|id|ind|ms|msa|ar|ara|he|heb|fa|hi|ca|gl|eu|is|mt|ga)(?=[-_.]|$)/i;
 // Some makers spell the language out — "octatrack_manual_japanese_OS1.25.pdf".
 const NON_ENGLISH_WORD = /(?:^|[-_.])(japanese|german|french|spanish|italian|dutch|portuguese|russian|chinese|korean|swedish|polish|deutsch|espanol|francais|italiano)(?=[-_.]|$)/i;
 const ENGLISH_HINT = /(?:^|[-_.])(en|eng|english)(?=[-_.]|$)/i;

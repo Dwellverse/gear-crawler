@@ -21,6 +21,18 @@ const BAD_PATH = /(press|news|blog|article|story|event|artist|support|manual|dow
 
 const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 
+/** <loc> is XML, so its contents are entity-encoded. An un-decoded &amp; makes the URL wrong. */
+const unentity = s => String(s)
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/&#0?39;|&apos;/g, "'").replace(/&amp;/g, '&');
+
+const locsIn = xml => [...String(xml).matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map(m => unentity(m[1]));
+
+/** A sitemap that points at more sitemaps. The .xml can be followed by a query string. */
+function isSitemapUrl(u) {
+    try { return /\.xml(\.gz)?$/i.test(new URL(u).pathname); } catch (e) { return /\.xml(\.gz)?($|\?)/i.test(u); }
+}
+
 /** Distinctive tokens from a product name, ignoring the maker and filler words. */
 function tokens(productName, brand) {
     let s = String(productName || '');
@@ -32,8 +44,7 @@ function tokens(productName, brand) {
 async function fetchSitemap(db, homepage, { log = () => {} } = {}) {
     for (const root of SITEMAP_ROOTS) {
         try {
-            const xml = await net.fetchText(db, homepage.replace(/\/$/, '') + root);
-            const locs = [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map(m => m[1]);
+            const locs = locsIn(await net.fetchText(db, homepage.replace(/\/$/, '') + root));
             if (locs.length) return locs;
         } catch (e) { /* try the next spelling */ }
     }
@@ -42,8 +53,8 @@ async function fetchSitemap(db, homepage, { log = () => {} } = {}) {
 }
 
 /** Expand a sitemap index one level, preferring children that look like product lists. */
-async function expand(db, locs, { max = 8 } = {}) {
-    const children = locs.filter(l => /\.xml(\.gz)?$/i.test(l));
+async function expand(db, locs, { max = 25, enough = 6000 } = {}) {
+    const children = locs.filter(isSitemapUrl);
     if (!children.length) return locs;
 
     const ordered = [
@@ -54,8 +65,8 @@ async function expand(db, locs, { max = 8 } = {}) {
     const out = [];
     for (const c of ordered) {
         try {
-            const xml = await net.fetchText(db, c);
-            out.push(...[...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map(m => m[1]));
+            out.push(...locsIn(await net.fetchText(db, c)));
+            if (out.length >= enough) break;   // a huge index does not need reading whole
         } catch (e) { /* skip */ }
     }
     return out.length ? out : locs;
@@ -79,6 +90,40 @@ function score(url, toks) {
     return s;
 }
 
+/**
+ * Every image the page offers, best first.
+ *
+ * og:image is the maker's own choice and so is tried first, but it is a *social share*
+ * image: often a page banner, and sometimes a 185px thumbnail. When it disappoints, the
+ * product shot is usually still on the page, so the <img> tags are collected too and the
+ * caller can measure them and take the largest.
+ */
+function imageCandidates(html, pageUrl) {
+    const out = [];
+    const push = (u) => {
+        if (!u) return;
+        try {
+            const abs = new URL(u, pageUrl).toString();
+            if (/\.(svg|gif)(\?|$)/i.test(abs)) return;                 // logos and spinners
+            if (/logo|icon|sprite|placeholder|avatar|badge|flag/i.test(abs)) return;
+            if (!out.includes(abs)) out.push(abs);
+        } catch (e) { /* skip */ }
+    };
+
+    const og = metaImage(html, pageUrl);
+    if (og) push(og);
+
+    for (const m of html.matchAll(/<img\b[^>]*>/gi)) {
+        const tag = m[0];
+        // srcset lists the biggest last as a rule; take them all and let size decide.
+        const ss = tag.match(/srcset=["']([^"']+)["']/i);
+        if (ss) for (const part of ss[1].split(',')) push(part.trim().split(/\s+/)[0]);
+        const src = tag.match(/\bsrc=["']([^"']+)["']/i) || tag.match(/data-src=["']([^"']+)["']/i);
+        if (src) push(src[1]);
+    }
+    return out;
+}
+
 function metaImage(html, pageUrl) {
     const patterns = [
         /<meta[^>]+property=["']og:image(?::secure_url)?["'][^>]+content=["']([^"']+)/i,
@@ -93,13 +138,70 @@ function metaImage(html, pageUrl) {
 }
 
 /**
+ * A short breadth-first walk of the maker's site looking for the product's page.
+ * Bounded hard: this runs once per unresolved product, so it has to stay cheap.
+ */
+const PRODUCT_INDEX = [
+    '/products', '/en/products', '/en-US/products', '/us/products', '/product',
+    '/catalog', '/shop', '/synthesizers', '/instruments', '/all-products', '/gear',
+];
+
+async function walkForProduct(db, homepage, toks, { log = () => {}, maxPages = 40 } = {}) {
+    const { parse } = require('node-html-parser');
+    const seen = new Set();
+    const hits = [];
+    let host;
+    try { host = new URL(homepage).host; } catch (e) { return []; }
+
+    // Start where the products are, not at the front door. Walking from the homepage
+    // spent its whole budget on marketing pages and reached no product listing at all,
+    // which is why thirty products came back "no match" with the site right there.
+    const base = homepage.replace(/\/$/, '');
+    const queue = [...PRODUCT_INDEX.map(p => base + p), homepage];
+
+    while (queue.length && seen.size < maxPages) {
+        const url = queue.shift();
+        if (seen.has(url)) continue;
+        seen.add(url);
+
+        let html;
+        try { html = await net.fetchText(db, url); } catch (e) { continue; }
+
+        const links = [];
+        for (const a of parse(html).querySelectorAll('a[href]')) {
+            try {
+                const u = new URL(a.getAttribute('href'), url);
+                if (u.host !== host) continue;
+                u.hash = '';
+                links.push(u.toString());
+            } catch (e) { /* skip */ }
+        }
+        for (const u of links) {
+            if (score(u, toks) > 0) hits.push(u);
+            // Only follow listing pages; there is no budget for wandering.
+            else if (!seen.has(u) && GOOD_PATH.test(u) && !BAD_PATH.test(u) && queue.length < maxPages) queue.push(u);
+        }
+        if (hits.length) break;   // found the product; stop walking
+    }
+    return hits;
+}
+
+/**
  * Resolve one product to { page, image } using the maker's site, or null.
  */
 async function findImage(db, { productName, brand, homepage }, { log = () => {}, sitemap = null } = {}) {
     const toks = tokens(productName, brand);
     if (!toks.length) return null;
 
-    const pages = sitemap || await expand(db, await fetchSitemap(db, homepage, { log }));
+    let pages = sitemap || await expand(db, await fetchSitemap(db, homepage, { log }));
+
+    // Plenty of makers publish no sitemap, or publish one that lists page layouts rather
+    // than products — Genelec's has 432 entries and not one names a product. Falling back
+    // to a short walk of their own site finds the product page the same way a person
+    // would, and costs a handful of requests only for the brands that need it.
+    if (!pages.some(u => score(u, toks) > 0)) {
+        pages = await walkForProduct(db, homepage, toks, { log });
+    }
     if (!pages.length) return null;
 
     const ranked = pages
@@ -118,4 +220,4 @@ async function findImage(db, { productName, brand, homepage }, { log = () => {},
     return null;
 }
 
-module.exports = { findImage, fetchSitemap, expand, score, tokens, metaImage };
+module.exports = { findImage, fetchSitemap, expand, score, tokens, metaImage, imageCandidates, walkForProduct };

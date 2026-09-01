@@ -10,6 +10,7 @@
 
 const gaps = require('./gaps');
 const strategies = require('../strategies');
+const versions = require('./versions');
 
 async function run(db, { apply = false, log = console.log } = {}) {
     const rows = db.prepare(`
@@ -51,6 +52,23 @@ async function run(db, { apply = false, log = console.log } = {}) {
             } else if (hit.gap.gearName !== d.gear_name) {
                 drop.push({ ...d, why: `now matches ${hit.gap.gearName}` });
             }
+        }
+    }
+
+    // Then drop revisions that a newer edition supersedes. Makers leave every version on
+    // the page; ingesting four of them means four near-identical documents competing for
+    // the same question, and an answer can come from a manual two revisions out of date
+    // looking exactly as confident as the current one.
+    const surviving = rows.filter(r => !drop.some(d => d.id === r.id));
+    const byGear = new Map();
+    for (const r of surviving) {
+        if (!byGear.has(r.gear_name)) byGear.set(r.gear_name, []);
+        byGear.get(r.gear_name).push(r);
+    }
+    const nameOf = r => strategies.publishedName(r.source_url);
+    for (const [, docs] of byGear) {
+        for (const sup of versions.supersededIds(docs, nameOf)) {
+            drop.push({ ...sup.doc, why: `superseded by ${String(sup.newestName).slice(0, 42)}` });
         }
     }
 

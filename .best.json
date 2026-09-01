@@ -1,0 +1,42 @@
+{
+ "sequential-prophet-6": {
+  "page": "https://sequential.com/product/prophet-6/",
+  "image": "https://sequential.com/wp-content/uploads/2024/12/Prophet6_3-4Rt_2245_transparent_TY2-2048x1722.png"
+ },
+ "roland-juno-d": {
+  "page": "https://www.roland.com/global/products/juno-d/",
+  "image": "https://static.roland.com/assets/images/products/gallery/juno_d_limited_edition_angle_gal.jpg"
+ },
+ "roland-rd-2000": {
+  "page": "https://www.roland.com/global/products/rd-2000/",
+  "image": "https://static.roland.com/products/rd-2000/v2/images/rd-2000_hero.jpg"
+ },
+ "boss-dd-7": {
+  "page": "https://www.boss.info/global/products/dd-7/",
+  "image": "https://static.roland.com/assets/images/products/gallery/dd_7_stage_gal.jpg"
+ },
+ "boss-ds-1": {
+  "page": "https://www.boss.info/global/products/ds-1/",
+  "image": "https://static.roland.com/products/ds-1/images/ds-1_01_gal.jpg"
+ },
+ "presonus-studio-24c": {
+  "page": "https://www.presonus.com/products/Studio-24c",
+  "image": "https://www.fender.com/cdn-cgi/image/format=auto/https://www.fmicassets.com/Damroot/Original/10103/highlight_pre_2777700403_03.jpg"
+ },
+ "shure-sm58": {
+  "page": "https://www.shure.com/en-US/products/microphones/sm58",
+  "image": "https://shure.widen.net/content/5gbymzdv2a/jpeg/SM58%20still%20lIfe_MedHR_Desaturated_Line.jpeg?position=c&amp;color=ffffffff&amp;quality=80&amp;u=bx760c"
+ },
+ "arturia-keystep-pro": {
+  "page": "https://www.arturia.com/products/hybrid-synths/keystep-pro/overview",
+  "image": "https://medias.arturia.net/cdn-cgi/image/format=auto,quality=80/images/products/keystep-pro/ow-section-4.jpg"
+ },
+ "arturia-beatstep-pro": {
+  "page": "https://www.arturia.com/products/hybrid-synths/beatstep-pro/overview",
+  "image": "https://medias.arturia.net/images/products/beatstep-pro/gallery/2.jpeg"
+ },
+ "behringer-x32-compact": {
+  "page": "https://www.behringer.com/en/products/0603-AAB",
+  "image": "https://cdn-media.empowertribe.com/6239287fd10a41cf9c8bf3bc2bd2e22e/Image_BE_0603-AAB_X32-COMPACT_Left_B.png"
+ }
+}

@@ -1,0 +1,58 @@
+{
+ "roland-tr-8s": {
+  "page": "https://www.roland.com/global/products/tr-8s/",
+  "image": "https://static.roland.com/assets/images/products/main/tr-8s_main.jpg"
+ },
+ "roland-rd-2000": {
+  "page": "https://www.roland.com/global/products/rd-2000/",
+  "image": "https://static.roland.com/assets/images/products/main/rd-2000_main.jpg"
+ },
+ "adam-audio-a5x": {
+  "page": "https://www.adam-audio.com/en/ax-series/a5x/",
+  "image": "https://www.adam-audio.com/content/uploads/2016/11/adam-audio-a5x-desktop-monitor-1500.jpg"
+ },
+ "focusrite-scarlett-2i2": {
+  "page": "https://focusrite.com/products/scarlett-2i2",
+  "image": "https://cdn11.bigcommerce.com/s-7exlzlf13h/products/307/images/785/scarlett-2i2-top-image-2400-2400__78159.1693324453.386.513.png?c=3"
+ },
+ "boss-dd-7": {
+  "page": "https://www.boss.info/global/products/dd-7/",
+  "image": "https://static.roland.com/assets/images/products/main/dd_7_top_main.jpg"
+ },
+ "boss-ds-1": {
+  "page": "https://www.boss.info/global/products/ds-1/",
+  "image": "https://static.roland.com/assets/images/products/main/ds1_main.jpg"
+ },
+ "behringer-x32-compact": {
+  "page": "https://www.behringer.com/en/products/0603-AAB",
+  "image": "https://cdn-media.empowertribe.com/6239287fd10a41cf9c8bf3bc2bd2e22e/Image_BE_0603-AAB_X32-COMPACT_Left_B.png"
+ },
+ "sennheiser-hd-600": {
+  "page": "https://www.sennheiser-hearing.com/en-US/p/hd-600/",
+  "image": "http://us.sennheiser-hearing.com/cdn/shop/files/Sennheiser_HD_600_Wired_Audiophile_Headphones_Main_Image.jpg?v=1759793125"
+ },
+ "shure-sm58": {
+  "page": "https://www.shure.com/en-US/products/microphones/sm58",
+  "image": "https://products.shureweb.eu/shure_product_db/product_main_images/files/31e/242/4b-/setcard/8f8ab8329c1107e0758c041654d7cc30.jpeg"
+ },
+ "sequential-prophet-6": {
+  "page": "https://sequential.com/product/prophet-6/",
+  "image": "https://sequential.com/wp-content/uploads/2024/12/Prophet-6-Logo-white.png"
+ },
+ "korg-minilogue-xd": {
+  "page": "https://www.korg.com/us/products/synthesizers/minilogue_xd/",
+  "image": "https://cdn.korg.com/us/products/upload/fce4953fa9eff86583fb9799d1700b5f.jpg"
+ },
+ "roland-juno-d": {
+  "page": "https://www.roland.com/global/products/juno-d/",
+  "image": "https://static.roland.com/assets/images/products/main/juno_d_limited_edition_top_main.jpg"
+ },
+ "presonus-studio-24c": {
+  "page": "https://www.presonus.com/products/Studio-24c",
+  "image": "https://www.presonus.com/cdn/shop/files/2777700403_pre_int_frt_1_nr.png?crop=center&height=630&v=1729317675&width=1200"
+ },
+ "strymon-el-capistan": {
+  "page": "https://www.strymon.net/product/el-capistan/",
+  "image": "https://www.strymon.net/wp-content/uploads/2024/08/ElCapPlugin_Site_StoreImage-1.jpg"
+ }
+}

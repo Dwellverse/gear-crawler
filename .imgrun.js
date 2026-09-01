@@ -52,11 +52,12 @@ function brandOf(name) {
             sitemaps.set(homepage, locs.length ? await imagery.expand(db, locs) : []);
             console.log('[' + brand + '] sitemap: ' + sitemaps.get(homepage).length + ' urls');
         }
+        // No sitemap is not the end: findImage falls back to walking the maker's site.
         const pages = sitemaps.get(homepage);
-        if (!pages.length) { out.push({ ...p, brand, why: 'no sitemap' }); console.log('  --    ' + p.name + '  (no sitemap)'); continue; }
 
         try {
-            const hit = await imagery.findImage(db, { productName: p.name, brand, homepage }, { sitemap: pages });
+            const hit = await imagery.findImage(db, { productName: p.name, brand, homepage },
+                { sitemap: pages.length ? pages : null });
             if (hit) { out.push({ ...p, brand, ...hit }); console.log('  ok    ' + p.name.padEnd(34) + hit.image.slice(0, 60)); }
             else { out.push({ ...p, brand, why: 'no product page matched' }); console.log('  --    ' + p.name + '  (no match)'); }
         } catch (e) {

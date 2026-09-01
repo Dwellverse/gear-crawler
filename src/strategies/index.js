@@ -75,10 +75,42 @@ function nonEnglishBySingleLetters(name) {
     return !letters.includes('E');
 }
 
-/** A filename that names a language other than English, and does not also say English. */
+/**
+ * Which language a filename claims, judged by the last language token in it.
+ *
+ * Two things broke the earlier version, and Novation's Circuit Rhythm exposed both.
+ * The separator class was [-_.], so "User Guide DE_1.pdf" and "v1.0 - NL.pdf" — where a
+ * space precedes the code — sailed through. And the presence of the word "english"
+ * anywhere kept the file, so "..._english_da.pdf", which is the Danish edition of an
+ * English-titled guide, was read as English.
+ *
+ * Reading the *last* token settles both: in "english_da" the last token is Danish, and
+ * in "ENG_OS1.52A" it is still English. The boundary is now any non-alphanumeric, so a
+ * space counts, while "Kit" cannot match "it" because K is alphanumeric.
+ */
+const LANG_CODES = new Set(('ja jp jpn de deu ger fr fra fre es esp spa it ita nl nld du pt por ptbr br pl pol ru rus ' +
+    'sv swe se zh cn chs cht tw ko kor kr bg bul da dan cs ces cze cz hu hun el ell gre tr tur uk ukr ro ron rum ' +
+    'sk slk sl slv hr hrv lt lit lv lav et est fi fin no nb nor sr srp vi vie th tha id ind ms msa ar ara he heb ' +
+    'fa hi ca gl eu is mt ga').split(' '));
+const ENGLISH_CODES = new Set(['en', 'eng', 'english', 'us', 'uk', 'gb']);
+
 function looksNonEnglish(url) {
     const name = publishedName(url).replace(/\.pdf.*$/i, '');
-    if ((NON_ENGLISH.test(name) || NON_ENGLISH_WORD.test(name)) && !ENGLISH_HINT.test(name)) return true;
+
+    // Spelled out in full — "octatrack_manual_japanese_OS1.25.pdf".
+    if (NON_ENGLISH_WORD.test(name)) return true;
+
+    const tokens = name.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    let verdict = null;
+    for (const tok of tokens) {
+        const bare = tok.replace(/\d+$/, '');          // "de1" -> "de", "efgscj5" -> "efgscj"
+        if (!bare) continue;
+        if (ENGLISH_CODES.has(bare)) verdict = 'en';
+        else if (LANG_CODES.has(bare)) verdict = 'other';
+    }
+    if (verdict === 'other') return true;
+    if (verdict === 'en') return false;
+
     return nonEnglishBySingleLetters(name);
 }
 

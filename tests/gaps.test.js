@@ -142,4 +142,25 @@ const versions = require('../src/phases/versions');
     console.log('  ok   superseded revisions are dropped and unversioned documents are kept');
 }
 
+
+// Language is judged by the LAST language token in a filename. Novation's Circuit Rhythm
+// broke the earlier version twice: a space before the code ("User Guide DE_1.pdf",
+// "v1.0 - NL.pdf") slipped past a [-_.] separator class, and the word "english" anywhere
+// in the name kept the file — so "..._english_da.pdf", the Danish edition, read as
+// English. Twenty-six translations reached the live corpus before this was caught.
+{
+    const check = (file, keep) => assert.strictEqual(
+        strategies.wanted('https://x/' + encodeURIComponent(file), ''), keep, file);
+
+    check('Circuit Rhythm User Guide v1.0 English - EN.pdf', true);
+    check('Circuit Rhythm User Guide DE_1.pdf', false);          // space before the code
+    check('Circuit Rhythm User Guide v1.0 - NL.pdf', false);     // space and dash
+    check('circuit_rhythm_user_guide_v1.0_english_da.pdf', false); // last token wins
+    check('Digitakt-User-Manual_ENG_OS1.52A_250708.pdf', true);
+    check('EK50_OM_E5.pdf', true);
+    check('EK50_OM_F5.pdf', false);
+    check('THUMP_GO_OM.pdf', true);                              // no language token at all
+    console.log('  ok   language is read from the last token, and a space is a separator');
+}
+
 console.log('all gap-matching tests passed');

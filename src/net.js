@@ -36,7 +36,7 @@ class Blocked extends Error {
 
 function hostOf(url) { return new URL(url).host; }
 
-async function rawFetch(url, { method = 'GET', timeoutMs = 60000, headers = {} } = {}) {
+async function rawFetch(url, { method = 'GET', timeoutMs = 60000, headers = {}, body } = {}) {
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), timeoutMs);
     try {
@@ -45,6 +45,10 @@ async function rawFetch(url, { method = 'GET', timeoutMs = 60000, headers = {} }
             redirect: 'follow',
             signal: ac.signal,
             headers: { 'User-Agent': USER_AGENT, 'Accept': '*/*', ...headers },
+            // Forwarded only when given: a keyword POST to a site's own search endpoint
+            // (Korg's download picker) is still one polite request, but without this the
+            // body silently vanished and every search came back empty.
+            ...(body !== undefined ? { body } : {}),
         });
     } finally {
         clearTimeout(timer);

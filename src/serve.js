@@ -123,7 +123,11 @@ async function load() {
       d.states.map(s=>'<option value="'+esc(s.state)+'">'+esc(s.state)+' ('+s.c+')</option>').join('');
     $('state').dataset.filled = '1';
   }
-  $('handoff-note').textContent = d.readyToHandOff + ' named and ready';
+  $('handoff-note').textContent = d.readyToHandOff
+    ? d.readyToHandOff + ' named and ready'
+    : 'nothing waiting — every named manual has been sent';
+  $('handoff').dataset.ready = d.readyToHandOff ? '1' : '0';
+  $('handoff').style.opacity = d.readyToHandOff ? '' : '.55';
   $('unmatched').textContent = d.unmatched.length ? d.unmatched.join('\\n') : 'none';
   loadDocs();
 }
@@ -161,10 +165,17 @@ $('discover-all').addEventListener('click', async () => {
   el.disabled = false; load();
 });
 $('handoff').addEventListener('click', async () => {
-  const el = $('handoff').disabled = true; say('handing off…');
+  const btn = $('handoff');
+  if (btn.dataset.ready === '0') {
+    say('Nothing to hand off: every named manual has already been sent. Discover a brand first.');
+    return;
+  }
+  btn.disabled = true; say('handing off…');
   const r = await post('/api/handoff', { limit: 10 });
-  say(r.error ? ('failed: ' + r.error) : (r.sent + ' handed off, ' + r.failed + ' failed'));
-  $('handoff').disabled = false; load();
+  if (r.error) say('failed: ' + r.error);
+  else if (!r.sent && !r.failed) say('Nothing was sent — no named manual is waiting.');
+  else say(r.sent + ' handed off, ' + r.failed + ' failed');
+  btn.disabled = false; load();
 });
 let PREVIEW = null;
 

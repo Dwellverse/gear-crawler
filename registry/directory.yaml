@@ -69,8 +69,9 @@ brands:
     homepage: https://sequential.com
     support:
       - https://sequential.com/support/
-      - https://sequential.com/downloads/
-    unusable: javascript_only
+    # Recon 2026-09-02: the javascript_only label was wrong — /support/ is static
+    # WordPress with 100 PDF hrefs in the raw HTML, robots clear. /downloads/ dropped;
+    # it is the page that earned the mislabel.
   - name: Teenage Engineering
     homepage: https://teenage.engineering
     support:

@@ -106,7 +106,13 @@ async function brandGaps({ api, key } = {}) {
  */
 function huntList(gear, brandName) {
     return (gear || [])
-        .filter(g => g.state !== 'live')
+        // Not-live is not the same as wanted. A quarantined entry was pulled out of
+        // service by a person, on purpose — hunting it made the crawler re-source the
+        // very document an admin had just pulled, and intake's ingest then cleared the
+        // quarantine stamp, silently undoing the decision. Quarantine is an answer, not
+        // a gap. wrong_document stays huntable (a BETTER document is the fix there),
+        // and the version filter keeps the bad one from being re-recorded.
+        .filter(g => g.state !== 'live' && g.state !== 'quarantined')
         .map(g => ({ ...g, ...modelCodes(g.gearName, brandName) }));
 }
 

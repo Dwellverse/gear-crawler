@@ -17,3 +17,11 @@ korg-run.log
 manifest.sqlite*
 node_modules/
 reports/*.jsonl
+
+# Scratch: one-off scripts, run logs, probe dumps — session artifacts, not the program
+.*.js
+.*.json
+!.env.example
+*.log
+clicklist.html
+drop-map.json

@@ -1,0 +1,34 @@
+# Family manuals: one document the manufacturer publishes for several siblings.
+#
+# Roland ships ONE Fantom-G manual covering the G6, G7 and G8; Sequential ships one
+# Users Guide for the Prophet X and XL. The strict matcher refuses these correctly —
+# the document never carries the sibling's own code — but refusing them forever costs
+# manuals we have already found.
+#
+# This is a curated table, deliberately not a heuristic. "Shares a family name" proves
+# nothing: the ARP 2600, 2600 FS and 2600 M are three instruments with three manuals,
+# and a rule that guessed would misfile them. An entry here is a human assertion,
+# checked against the manufacturer's own site, that the named document genuinely covers
+# every listed sibling.
+#
+#   family:      slug, for logs
+#   covers:      the exact catalogue gear names this manual answers for
+#   doc_pattern: regex the document's name must match (case-insensitive). Anchor it so
+#                a sibling-SPECIFIC document cannot match — e.g. fantom[-_ ]?g(?![0-9])
+#                accepts "Fantom-G_OM" and refuses "Fantom-G6_Manual".
+
+families:
+  - family: roland-fantom-g
+    covers:
+      - Roland Fantom-G6
+      - Roland Fantom-G7
+      - Roland Fantom-G8
+    doc_pattern: "fantom[-_ ]?g(?![0-9a-z])"
+    verified: "roland.com support lists one Fantom-G owner's manual for all three sizes (2026-09-02)"
+
+  - family: sequential-prophet-x
+    covers:
+      - Sequential Prophet X
+      - Sequential Prophet XL
+    doc_pattern: "prophet[-_ ]?x(?![0-9a-km-z])l?(?![0-9a-z])"
+    verified: "sequential.com publishes one Prophet X Users Guide covering X and XL (2026-09-01)"

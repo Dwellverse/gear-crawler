@@ -164,3 +164,38 @@ const versions = require('../src/phases/versions');
 }
 
 console.log('all gap-matching tests passed');
+
+/* ------------------------------------------------------- family manuals */
+{
+    const fam = require('../src/phases/gaps');
+    const huntF = brand => fam.huntList([
+        { gearName: 'Roland Fantom-G8', state: 'no_file' },
+        { gearName: 'ARP 2600 FS', state: 'no_file' },
+    ], brand || 'Roland');
+
+    const t = (name, fn) => { try { fn(); console.log('  ok   ' + name); } catch (e) { console.log('  FAIL ' + name + ' — ' + e.message); process.exitCode = 1; } };
+    const assert = require('assert');
+
+    t('the family manual fills the sibling gap', () => {
+        const m = fam.matchGap({ url: 'https://static.roland.com/assets/media/pdf/Fantom-G_OM.pdf', linkText: 'Fantom-G Owner\'s Manual' }, huntF());
+        assert(m && m.gap.gearName === 'Roland Fantom-G8', 'Fantom-G_OM should fill the G8 gap');
+        assert(String(m.code).startsWith('family:'), 'and be labelled as a family match');
+    });
+
+    t('a sibling-specific document cannot ride the family rule', () => {
+        const m = fam.matchGap({ url: 'https://static.roland.com/assets/media/pdf/Fantom-G6_Manual.pdf', linkText: 'Fantom-G6 Manual' }, huntF());
+        assert(!m || m.gap.gearName !== 'Roland Fantom-G8', 'a G6-specific manual must not fill the G8 gap');
+    });
+
+    t('sharing a family NAME grants nothing without a curated entry', () => {
+        // The ARP 2600 original manual must not fill the 2600 FS gap: three siblings,
+        // three separate manuals, and no families.yaml entry says otherwise.
+        const m = fam.matchGap({ url: 'https://example.com/ARP_2600_Owners_Manual.pdf', linkText: 'ARP 2600 manual' }, huntF('ARP'));
+        assert(!m || m.gap.gearName !== 'ARP 2600 FS', 'no curated entry, no family match');
+    });
+
+    t('the gap\'s own code still wins over the family rule', () => {
+        const m = fam.matchGap({ url: 'https://static.roland.com/assets/media/pdf/Fantom-G8_Supplement.pdf', linkText: 'Fantom-G8 supplement' }, huntF());
+        assert(m && m.gap.gearName === 'Roland Fantom-G8' && !String(m.code).startsWith('family:'), 'specific code match preferred');
+    });
+}

@@ -143,6 +143,35 @@ function variantsIn(text) {
  * A code match is required — a loose name overlap is not enough to claim identity —
  * and any variant word in the gear's name must also appear on the document.
  */
+/* ------------------------------------------------------- family manuals */
+
+// A curated table (registry/families.yaml) of single documents that manufacturers
+// publish for several siblings — one Fantom-G manual for the G6/G7/G8. Curated and not
+// heuristic on purpose: the ARP 2600 / 2600 FS / 2600 M share a family name and have
+// three separate manuals, so "looks related" proves nothing. See the yaml header.
+let FAMILIES = null;
+function families() {
+    if (FAMILIES) return FAMILIES;
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        const YAML = require('yaml');
+        const raw = YAML.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'registry', 'families.yaml'), 'utf8'));
+        FAMILIES = (raw.families || []).map(f => ({
+            family: f.family,
+            covers: new Set((f.covers || []).map(c => String(c).toLowerCase())),
+            pattern: new RegExp(f.doc_pattern, 'i'),
+        }));
+    } catch (e) { FAMILIES = []; }
+    return FAMILIES;
+}
+
+/** The family whose manual may answer for this gap, or null. */
+function familyFor(gearName) {
+    const key = String(gearName || '').toLowerCase();
+    return families().find(f => f.covers.has(key)) || null;
+}
+
 function matchGap(doc, hunt) {
     let hay = '';
     try { hay = decodeURIComponent(doc.url || ''); } catch (e) { hay = String(doc.url || ''); }
@@ -165,8 +194,17 @@ function matchGap(doc, hunt) {
             // Prefer the most specific code: MC-707 beats MC-7 on the same filename.
             if (!best || c.key.length > best.code.length) best = { gap: g, code: c.key };
         }
+
+        // The family rule, only after the gap's own codes have failed: a curated
+        // family's shared manual answers for its listed siblings when the document
+        // matches the family pattern — which is anchored so a sibling-SPECIFIC
+        // document (Fantom-G6_Manual) can never ride it.
+        if (!best) {
+            const fam = familyFor(g.gearName);
+            if (fam && fam.pattern.test(hay)) best = { gap: g, code: 'family:' + fam.family };
+        }
     }
     return best;
 }
 
-module.exports = { coverageFor, brandGaps, huntList, matchGap, modelCodes, codeRegex, norm };
+module.exports = { coverageFor, brandGaps, huntList, matchGap, modelCodes, codeRegex, norm, familyFor };

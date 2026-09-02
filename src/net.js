@@ -173,10 +173,43 @@ async function politeFetch(db, url, opts = {}) {
     return run;
 }
 
+/**
+ * Fetch a page as text — a PAGE, never a payload.
+ *
+ * At Eventide the walker followed installer links and buffered multi-gigabyte
+ * binaries into res.text() until V8's string limit killed the whole run — a crash for
+ * us and gigabytes of pointless download for them. Two fences now: anything whose
+ * Content-Type is not text/HTML/XML/JSON is refused before a byte is read, and even a
+ * page is read through the stream with a 5MB ceiling — no real support page is
+ * bigger, and anything that is was never a page.
+ */
+const MAX_PAGE_BYTES = 5 * 1024 * 1024;
+
 async function fetchText(db, url, opts) {
     const res = await politeFetch(db, url, opts);
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    return res.text();
+
+    const type = String(res.headers.get('content-type') || '').toLowerCase();
+    if (type && !/text\/|html|xml|json/.test(type)) {
+        try { res.body && res.body.cancel && res.body.cancel(); } catch (e) { /* already done */ }
+        throw new Error(`not a page (${type.split(';')[0]})`);
+    }
+
+    const reader = res.body && res.body.getReader ? res.body.getReader() : null;
+    if (!reader) return res.text();   // environments without streams keep old behaviour
+    const parts = [];
+    let size = 0;
+    for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > MAX_PAGE_BYTES) {
+            try { reader.cancel(); } catch (e) { /* stream already closed */ }
+            throw new Error(`page over ${MAX_PAGE_BYTES / 1048576}MB — treating as a payload, not a page`);
+        }
+        parts.push(value);
+    }
+    return Buffer.concat(parts.map(v => Buffer.from(v))).toString('utf8');
 }
 
 module.exports = { politeFetch, fetchText, robotsFor, USER_AGENT, Blocked, hostOf };

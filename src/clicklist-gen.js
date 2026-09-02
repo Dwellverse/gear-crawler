@@ -30,7 +30,7 @@ const fallback = (brand, g) => {
 const slug = g => g.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-(async () => {
+async function build() {
     const dropMap = {};
     const sections = [];
     let total = 0;
@@ -58,8 +58,6 @@ const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 ${rows}
 </table>`);
     }
-
-    fs.writeFileSync(path.join(__dirname, '..', 'drop-map.json'), JSON.stringify(dropMap, null, 1));
 
     const html = `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
@@ -102,6 +100,15 @@ ${sections.join('\n')}
   prog();
 </script>
 </body></html>`;
-    fs.writeFileSync(path.join(__dirname, '..', 'clicklist.html'), html);
-    console.log('clicklist.html regenerated: ' + total + ' rows, live from the coverage endpoint');
-})().catch(e => { console.error('ERR', e.message); process.exit(1); });
+    return { html, dropMap, total };
+}
+
+module.exports = { build };
+
+if (require.main === module) {
+    build().then(({ html, dropMap, total }) => {
+        fs.writeFileSync(path.join(__dirname, '..', 'clicklist.html'), html);
+        fs.writeFileSync(path.join(__dirname, '..', 'drop-map.json'), JSON.stringify(dropMap, null, 1));
+        console.log('clicklist.html regenerated: ' + total + ' rows, live from the coverage endpoint');
+    }).catch(e => { console.error('ERR', e.message); process.exit(1); });
+}

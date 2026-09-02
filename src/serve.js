@@ -85,6 +85,7 @@ input,select{background:#1b1b22;border:1px solid #33333d;border-radius:6px;color
     <button id="lookup-korg" title="Probe Korg gaps via the download picker">Lookup Korg</button>
     <button id="behringer-btn" title="Fill Behringer gaps through its storefront API">Behringer API</button>
     <button id="rejudge-btn" title="Re-apply current match rules to the queue (dry run)">Rejudge</button>
+    <a href="/clicklist" target="_blank" style="margin-left:8px; color:#a78bfa; font-size:13px; align-self:center">Click-list (the human hour) &rarr;</a>
     <span class="muted" id="handoff-note"></span>
   </div>
   <table id="docs"></table>
@@ -290,6 +291,18 @@ function start({ port = 7777, dbPath = null } = {}) {
             if (url.pathname === '/') {
                 res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
                 return res.end(PAGE);
+            }
+
+            if (url.pathname === '/clicklist') {
+                // Regenerated on every visit from the live coverage endpoint — the same
+                // pool the admin reads — and the drop-map is written alongside so the
+                // uploader always agrees with the page on what a filename means.
+                const { html, dropMap } = await require('./clicklist-gen').build();
+                const fsMod = require('fs');
+                const pathMod = require('path');
+                fsMod.writeFileSync(pathMod.join(__dirname, '..', 'drop-map.json'), JSON.stringify(dropMap, null, 1));
+                res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+                return res.end(html);
             }
 
             if (url.pathname === '/api/state') {

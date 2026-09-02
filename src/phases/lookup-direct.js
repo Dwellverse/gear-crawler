@@ -190,13 +190,20 @@ const BRANDS = {
 /**
  * Look up one brand's gaps directly. Returns what it found; `dryRun` records nothing.
  */
-async function run(db, { brand, limit = 25, dryRun = false, log = console.log } = {}) {
+async function run(db, { brand, limit = 25, only = null, dryRun = false, log = console.log } = {}) {
     const b = BRANDS[String(brand || '').toLowerCase()];
     if (!b) return { error: `No direct lookup for "${brand}". Have: ${Object.keys(BRANDS).join(', ')}.` };
 
     const cov = await gaps.coverageFor(b.name);
     if (cov.error) return { error: cov.error };
-    const hunt = gaps.huntList(cov.gear || [], b.name);
+    let hunt = gaps.huntList(cov.gear || [], b.name);
+    // `only` aims the probes at specific gear instead of the head of the gap queue —
+    // the language purge left 102 named empties, and a limit walked from the top spent
+    // its budget on Roland Cloud entries before ever reaching the Fantom-G8.
+    if (only && only.length) {
+        const want = new Set(only.map(n => n.toLowerCase()));
+        hunt = hunt.filter(g => want.has(g.gearName.toLowerCase()));
+    }
     if (!hunt.length) return { brand: b.name, gaps: 0, probed: 0, recorded: 0 };
 
     // The per-gap budget above keeps any one gap cheap; this keeps the run bounded.

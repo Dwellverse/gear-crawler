@@ -80,6 +80,11 @@ input,select{background:#1b1b22;border:1px solid #33333d;border-radius:6px;color
     <input id="q" placeholder="Search gear or URL…" size="28">
     <select id="state"><option value="outstanding">still to do</option></select>
     <button class="go" id="handoff">Hand off 10 to the app</button>
+    <button id="hunt-btn" title="Walk the ranked gap brands, demand-weighted, and record what fills gaps">Hunt top 10</button>
+    <button id="lookup-roland" title="Probe Roland gaps by product URL">Lookup Roland</button>
+    <button id="lookup-korg" title="Probe Korg gaps via the download picker">Lookup Korg</button>
+    <button id="behringer-btn" title="Fill Behringer gaps through its storefront API">Behringer API</button>
+    <button id="rejudge-btn" title="Re-apply current match rules to the queue (dry run)">Rejudge</button>
     <span class="muted" id="handoff-note"></span>
   </div>
   <table id="docs"></table>
@@ -134,7 +139,7 @@ async function load() {
 
 async function loadDocs() {
   const d = await get('/api/documents?q='+encodeURIComponent($('q').value)+'&state='+encodeURIComponent($('state').value));
-  $('docs').innerHTML = '<tr><th>Gear</th><th>State</th><th class="num">Pages</th><th class="num">Chunks</th><th>Source</th></tr>' +
+  $('docs').innerHTML = '<tr><th>Gear</th><th>State</th><th class="num" title="as reported at handoff — the admin panel shows live counts">Pages†</th><th class="num" title="as reported at handoff — the admin panel shows live counts">Chunks†</th><th>Source</th></tr>' +
     (d.docs.length ? d.docs.map(x=>{
       const tone = x.state==='handed_off'?'ok':x.state.startsWith('dead')?'bad':'neutral';
       return '<tr><td>'+(x.gear_name ? esc(x.gear_name) : '<span class="muted">unresolved</span>')+'</td>'+
@@ -178,6 +183,21 @@ $('handoff').addEventListener('click', async () => {
   btn.disabled = false; load();
 });
 let PREVIEW = null;
+
+async function runBtn(id, url, body, describe) {
+  const b = $(id); b.disabled = true; const was = b.textContent; b.textContent = 'running…';
+  try {
+    const r = await post(url, body || {});
+    alert(describe(r));
+  } catch (e) { alert('failed: ' + e.message); }
+  b.disabled = false; b.textContent = was; refresh();
+}
+$('hunt-btn').onclick = () => runBtn('hunt-btn', '/api/hunt', { top: 10 }, r => (r.log || []).slice(-6).join('
+') || 'done');
+$('lookup-roland').onclick = () => runBtn('lookup-roland', '/api/lookup-direct', { brand: 'Roland' }, r => r.error || (r.probed + ' probed, ' + r.recorded + ' recorded'));
+$('lookup-korg').onclick = () => runBtn('lookup-korg', '/api/lookup-direct', { brand: 'Korg' }, r => r.error || (r.probed + ' probed, ' + r.recorded + ' recorded'));
+$('behringer-btn').onclick = () => runBtn('behringer-btn', '/api/behringer', {}, r => r.error || (r.tried + ' tried, ' + r.recorded + ' recorded'));
+$('rejudge-btn').onclick = () => runBtn('rejudge-btn', '/api/rejudge', {}, r => r.checked + ' checked, ' + r.dropped + ' would drop (dry run)');
 
 get('/api/directory').then(d => {
   $('brand-list').innerHTML = d.brands.map(b => '<option value="' + esc(b.name) + '">').join('');
@@ -321,6 +341,45 @@ function start({ port = 7777, dbPath = null } = {}) {
             if (url.pathname === '/api/adopt' && req.method === 'POST') {
                 const body = await readBody(req);
                 return json(res, lookup.adopt(db, body));
+            }
+
+            if (url.pathname === '/api/hunt' && req.method === 'POST') {
+                const body = await readBody(req);
+                const lines = [];
+                await require('./phases/hunt').run(db, {
+                    top: Math.min(parseInt(body.top, 10) || 10, 45),
+                    apply: true,
+                    log: l => lines.push(String(l)),
+                });
+                await require('./phases/report').send(db, { lastRun: 'hunt (cockpit)', log: () => {} });
+                return json(res, { log: lines.slice(-80) });
+            }
+
+            if (url.pathname === '/api/lookup-direct' && req.method === 'POST') {
+                const body = await readBody(req);
+                const r = await require('./phases/lookup-direct').run(db, {
+                    brand: body.brand, limit: parseInt(body.limit, 10) || 25,
+                });
+                return json(res, r);
+            }
+
+            if (url.pathname === '/api/archive' && req.method === 'POST') {
+                const body = await readBody(req);
+                const r = await require('./phases/archive').run(db, {
+                    brand: body.brand, limit: parseInt(body.limit, 10) || 15,
+                });
+                return json(res, r);
+            }
+
+            if (url.pathname === '/api/behringer' && req.method === 'POST') {
+                const r = await require('./phases/behringer-api').run(db, { limit: 30 });
+                return json(res, r);
+            }
+
+            if (url.pathname === '/api/rejudge' && req.method === 'POST') {
+                const body = await readBody(req);
+                const r = await require('./phases/rejudge').run(db, { apply: !!body.apply });
+                return json(res, r);
             }
 
             if (url.pathname === '/api/discover' && req.method === 'POST') {

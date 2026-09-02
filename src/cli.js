@@ -121,21 +121,46 @@ async function main() {
                              maxPages: parseInt(arg('max-pages', '200'), 10),
                              maxDepth: parseInt(arg('max-depth', '3'), 10),
                              apply: has('apply'),
-                         }); break;
+                         });
+                         await require('./phases/report').send(db, { lastRun: 'hunt' });
+                         break;
         case 'lookup':   await require('./phases/lookup-direct').run(db, {
                              brand: arg('brand', ''),
                              limit: parseInt(arg('limit', '25'), 10),
                              dryRun: has('dry-run'),
                          }); break;
+        case 'archive':  {
+                             const r = await require('./phases/archive').run(db, {
+                                 brand: arg('brand', ''),
+                                 limit: parseInt(arg('limit', '15'), 10),
+                                 dryRun: has('dry-run'),
+                             });
+                             console.log(JSON.stringify(r));
+                             break;
+                         }
+        case 'behringer': {
+                             const r = await require('./phases/behringer-api').run(db, {
+                                 limit: parseInt(arg('limit', '30'), 10),
+                                 dryRun: has('dry-run'),
+                             });
+                             console.log(JSON.stringify(r));
+                             break;
+                         }
+        case 'report':   await require('./phases/report').send(db, { lastRun: arg('note', 'manual report') }); break;
         case 'rejudge':  {
                              const r = await require('./phases/rejudge').run(db, { apply: has('apply') });
                              console.log(`
 ${r.checked} checked, ${r.dropped} no longer hold` + (r.applied ? ' (removed)' : ' (dry run — pass --apply)'));
                              break;
                          }
-        case 'handoff':  await require('./phases/handoff').run(db, {
-                             limit: parseInt(arg('limit', '20'), 10), dryRun: has('dry-run'),
-                         }); break;
+        case 'handoff':  {
+                             const r = await require('./phases/handoff').run(db, {
+                                 limit: parseInt(arg('limit', '20'), 10), dryRun: has('dry-run'),
+                             });
+                             // Every run ends by telling the admin card where things stand.
+                             await require('./phases/report').send(db, { lastRun: 'handoff', yield: { handedOff: r && r.sent, failed: r && r.failed } });
+                             break;
+                         }
         default:
             console.log(require('fs').readFileSync(__filename, 'utf8')
                 .split('\n').slice(1, 20).map(l => l.replace(/^ \* ?/, '').replace(/^\/\*\*?/, '')).join('\n'));

@@ -106,7 +106,30 @@ async function run(db, { top = 10, maxPages = 200, maxDepth = 3, apply = false, 
 
     const dir = directory();
     const inDirectory = b => dir.some(d => norm(d.name) === norm(b.brand));
-    const targets = all.brands.filter(b => b.missing > 0 && inDirectory(b)).slice(0, top);
+    // Demand-weighted ranking: the app records what shoppers asked that no manual could
+    // answer (/console/api/gaps). A brand two shoppers asked about this month outranks a
+    // brand with more missing entries that nobody has ever asked for — catalogue size
+    // measures the hole, demand measures who is standing in it.
+    let demandByBrand = new Map();
+    try {
+        const res = await fetch(`${process.env.GEARPLUG_API}/admin/console/api/gaps?days=30`, {
+            headers: { 'X-Ingest-Key': process.env.GEARPLUG_INGEST_KEY || '' },
+        });
+        if (res.ok) {
+            const d = await res.json();
+            (d.gaps || d.items || []).forEach(g => {
+                const brand = String(g.gearName || g.name || '').split(/\s+/)[0].toLowerCase();
+                if (brand) demandByBrand.set(brand, (demandByBrand.get(brand) || 0) + (g.count || 1));
+            });
+            if (demandByBrand.size) log(`demand data: ${demandByBrand.size} brand(s) shoppers asked about`);
+        }
+    } catch (e) { /* no demand data — rank by missing alone */ }
+
+    const demandOf = b => demandByBrand.get(String(b.brand).split(/\s+/)[0].toLowerCase()) || 0;
+    const targets = all.brands
+        .filter(b => b.missing > 0 && inDirectory(b))
+        .sort((a, b) => (demandOf(b) * 10 + b.missing) - (demandOf(a) * 10 + a.missing))
+        .slice(0, top);
 
     const out = [];
     let totalAdded = 0;

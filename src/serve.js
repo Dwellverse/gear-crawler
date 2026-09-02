@@ -193,8 +193,7 @@ async function runBtn(id, url, body, describe) {
   } catch (e) { alert('failed: ' + e.message); }
   b.disabled = false; b.textContent = was; refresh();
 }
-$('hunt-btn').onclick = () => runBtn('hunt-btn', '/api/hunt', { top: 10 }, r => (r.log || []).slice(-6).join('
-') || 'done');
+$('hunt-btn').onclick = () => runBtn('hunt-btn', '/api/hunt', { top: 10 }, r => (r.log || []).slice(-6).join(' | ') || 'done');
 $('lookup-roland').onclick = () => runBtn('lookup-roland', '/api/lookup-direct', { brand: 'Roland' }, r => r.error || (r.probed + ' probed, ' + r.recorded + ' recorded'));
 $('lookup-korg').onclick = () => runBtn('lookup-korg', '/api/lookup-direct', { brand: 'Korg' }, r => r.error || (r.probed + ' probed, ' + r.recorded + ' recorded'));
 $('behringer-btn').onclick = () => runBtn('behringer-btn', '/api/behringer', {}, r => r.error || (r.tried + ' tried, ' + r.recorded + ' recorded'));

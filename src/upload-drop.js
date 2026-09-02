@@ -26,14 +26,20 @@ const KEY = () => process.env.GEARPLUG_INGEST_KEY || '';
 
 const slugId = n => n.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 100);
 
-/** slug -> { gearName, brand } for every gap of the hand-worked brands. */
+/**
+ * slug -> { gearName, manufacturer } for every row on the click-list.
+ *
+ * Read from drop-map.json, which clicklist-gen.js writes from the LIVE coverage
+ * endpoint — the same pool the admin reads — so the uploader and the list can never
+ * disagree about what a filename means. The old builder parsed a gap-report snapshot
+ * that had drifted three days behind the library.
+ */
 function buildMap() {
-    const report = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '.gapreport.json'), 'utf8'));
+    const raw = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'drop-map.json'), 'utf8'));
     const map = {};
-    for (const b of report.brands || report) {
-        for (const it of b.items || []) map[slugId(it.name)] = { gearName: it.name, brand: b.brand };
+    for (const [file, v] of Object.entries(raw)) {
+        map[file.replace(/\.pdf$/i, '')] = { gearName: v.gearName, brand: v.manufacturer || v.brand };
     }
-    fs.writeFileSync(path.join(__dirname, '..', 'drop-map.json'), JSON.stringify(map, null, 1));
     return map;
 }
 
